@@ -1,0 +1,38 @@
+ratpak is a declarative programming language for stream processing
+it is statically typed, but with primitive functions supported across all combinations of basic types
+ratpak operates on an infinite sequence of integers or floats, preferring machine widths (32b/64b) unless specifically instructed elsewhere
+ratpak processes can accept packetized data as a sequence of finite length vectors. these vectors will be implicitly cast to a sequence of atomic tokens where applicable.
+
+a ratpak program is a plaintext file containing one or more process definitions
+
+a ratpak process definition is identified by a string, and can make use of any process definitions from any rust source files or any ratpak files in ./ or ./src
+
+a process definition is a flowgraph prefixed by a process prototype.
+
+a process prototype starts with an optional '=>' demarkating an the existence of an input stream, is followed by a sequence of alphanumeric characters by which it can later be referenced, an optional parenthetical sequence of variable names, and an optional '=>' indicating the existence of an output stream
+
+the ratpak compiler will look for a process with no inputs and no outputs called 'main' and instantiate it, if found
+
+a ratpak flowgraph is fully directed, can be cyclical, has either one or zero sources, and one or zero sinks
+
+a ratpak flowgraph consists of tab indented lines, which are otherwise whitespace insensitive.
+
+a line in a ratpak flowgraph may consist of up to N expressions containing, where N is the number of non-terminating expressions on the above line
+each expression has implicit access to the output of the expression above and the input of the expression below
+
+the following characters are ratpak primitives: ^ v " . Z    + * - < >
+	^ separates a pair of ratpak expressions accepting the same input
+	v separates a pair of ratpak expressions returning output to the same output
+	" represents a no-relative-delay connection between .upper and .lower
+	. represents a relative stream reference, accepting either a positive or negative integer containing the distance (sloc) from the other reference.
+		a reference to a stream a negative distance away ends a path
+	Z sends a null token on startup, and then passes .upper to .lower, acting as a unit delay
+	+ * - < > all represent their standard arithmatic operators, but as monads accept one or more numerical constant or other streams to broadcast .upper against
+
+a ratpak process definition ends with a newline not followed immediately by \t
+
+ratpak code is not sensitive to the existence of the space character " ", allowing flowgraph definitions to be autoformated by a text editor
+
+static numerical primitives start with a digit or an dash and are ended by a non digit character
+
+each line in a ratpak flowgraph has implicit access to the output of the process above it and the input of the process below it

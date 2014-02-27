@@ -1,0 +1,53 @@
+=> biquad ((a0 a1 a2) (b0 b1 b2)) =>
+	(+ .3 .4)
+	(Z ^ (* b0))
+	((* a1) ^ (Z) ^ (* b1)) (+ .1 .2)
+	(.-3)  ((* a2) ^ (* b2)) (.-1) (")
+	(.-4 ) (.-2)  (")
+
+
+=> biquad ((a0 a1 a2) (b0 b1 b2)) =>
+	                          (+ .3 .4)
+	                   (Z          ^   (* b0))
+	        ((* a1)  ^    Z   ^  (* b1))   (+ .1 .2)
+	        (.-3)   (* a2) ^ (* b2) (.-1)    (")
+	               (.-4)   (.-2)         (")
+
+
+
+rtlsdr (freq, bw) =>
+
+
+=> audioSink (sRate)
+
+
+audioSource (sRate) =>
+
+
+=> Z =>
+
+
+=> lpf 3db =>
+	biquad (buildBiquad (3db (tick)))
+
+
+=> vidsink
+
+
+=> normalize =>
+
+
+=> trigger =>
+	((Z) ^ (") ^ (lpf (1e-1)))
+	(Z) (") > (")
+	(Z) (lpf (1e-5))
+	(Z) ( > (0.5))
+	(") if (")
+
+
+=> dle =>
+
+
+=> pkt (len) =>
+
+

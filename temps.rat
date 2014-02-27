@@ -1,0 +1,19 @@
+main
+	rtlSource (434e6,256e3)
+	trigger
+	filter
+	discretize ^ printSink
+	rle
+	dle
+	validTokenA ^ validTokenManchester ^ printSink
+	(packetizer (36)) (manchesterd)
+	(decoder (14,2,12,8)) (packetizer (195))
+	(decoder (15,6,5,8,2,9,1,4,2,9,4)) (")
+	 sensorUnpackerA v sensorUnpackerB
+	udpTokenSink ('hello',9999) ^ printSink
+
+=> test =>
+	hello
+
+
+
