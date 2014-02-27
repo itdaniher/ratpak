@@ -1,8 +1,12 @@
+{
+	var _ = require("underscore");
+}
+
 start =
    n: network+ "\n\n" { return n }
 
 name =
-  proc: ($[a-zA-Z"]+)
+  (portal: "."? proc: $("-"?[a-zA-Z0-9"])+ ){ if (portal) {return portal+proc} if (!portal) {return proc}}
 
 value =
    [a-zA-Z0-9, ']+
@@ -12,16 +16,16 @@ args = " "? "(" v:$value+ ")" " "? { return v}
 dyad = " "? op:[v^] " "? {return op}
 
 proc =
-	n: name a: args? { return [n, a] }
+	n: name a: args? { if (a) { return {"proc": n, "args": a} } else { return {"proc": n} } }
 
 fbrk =
-	d: dyad rp: proc { x = [d]; x.push(rp); return x }
+	d: dyad rp: proc { return _.extend({"dyad": d}, rp)}
 
 expr =
-  lp: proc d:fbrk* {var x = [lp]; x.push(d); return x}
+  lp: proc d:fbrk* {if (d) { return [lp,d] } else { return lp }}
 
 line =
-  "\t" " "* e:((lp:"("? ex:expr rp:")"? sp:" "?){return ex})+"\n" {return e}
+  "\t" " "* e:((lp:"("? ex:expr rp:")"? sp:" "?){return ex})+"\n" {return {"line":_.flatten(e)}}
 
 network =
-   i:"=>"? " "? id:name " "? o:"=>"? "\n" lines:line+ "\n" {return [id, i == "=>", o == "=>", lines]}
+   i:"=>"? " "? id:name " "? o:"=>"? "\n" lines:line+ "\n" {return {"name": id, "in":(i == "=>"), "out": (o == "=>"), "lines": lines}}

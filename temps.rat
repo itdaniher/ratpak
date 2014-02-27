@@ -3,8 +3,9 @@ main
 	trigger
 	filter
 	discretize ^ printSink
-	rle
-	dle
+	rle (.2)
+	dle (")
+	(") (.-2)
 	validTokenA ^ validTokenManchester ^ printSink
 	(packetizer (36)) (manchesterd)
 	(decoder (14,2,12,8)) (packetizer (195))
