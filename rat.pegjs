@@ -6,10 +6,10 @@ start =
    n: network+ "\n\n" { return n }
 
 name =
-  (portal: "."? proc: $("-"?[a-zA-Z0-9"])+ ){ if (portal) {return portal+proc} if (!portal) {return proc}}
+  (portal: "."? proc: $[\+\*\&\>\<\-\/a-zA-Z0-9"]+ ) { if (portal) {return portal+proc} if (!portal) {return proc} }
 
 value =
-   [a-zA-Z0-9, ']+
+   ("0."?[a-zA-Z0-9, '])+
 
 args = " "? "(" v:$value+ ")" " "? { return v}
 
@@ -28,4 +28,4 @@ line =
   "\t" " "* e:((lp:"("? ex:expr rp:")"? sp:" "?){return ex})+"\n" {return {"line":_.flatten(e)}}
 
 network =
-   i:"=>"? " "? id:name " "? o:"=>"? "\n" lines:line+ "\n" {return {"name": id, "in":(i == "=>"), "out": (o == "=>"), "lines": lines}}
+   i:"=>"? " "? id:name " "? o:"=>"? "\n" lines:line* "\n" {return {"name": id, "in":(i == "=>"), "out": (o == "=>"), "lines": lines}}
