@@ -17,7 +17,7 @@ ref =
 
 args = " "? "(" v:$value ")" " "? { return v}
 
-dyad = " "? op:[v^] " "? {return op}
+dyad = " "? op:[v^] " " {return op}
 
 proc =
 	n: name a: args { return {"proc": n, "args": a} }
