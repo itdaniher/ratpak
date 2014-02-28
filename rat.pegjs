@@ -3,29 +3,34 @@
 }
 
 start =
-   n: network+ "\n\n" { return n }
+	n: network+ "\n\n" { return n }
 
 name =
-  (portal: "."? proc: $[\+\*\&\>\<\-\/a-zA-Z0-9"]+ ) { if (portal) {return portal+proc} if (!portal) {return proc} }
+	$([+\*\&\>\<\-\/a-zA-Z"]+[0-9]*)
 
 value =
-   ("0."?[a-zA-Z0-9, '])+
+	$("-"?"0."?[a-zA-Z0-9']+","?" "?)+
 
-args = " "? "(" v:$value+ ")" " "? { return v}
+ref =
+	" "? "(" " "?r:ref " "? ")" " "? {return r}
+	/ r:$("." "-"? [0-9]+) {return r}
+
+args = " "? "(" v:$value ")" " "? { return v}
 
 dyad = " "? op:[v^] " "? {return op}
 
 proc =
-	n: name a: args? { if (a) { return {"proc": n, "args": a} } else { return {"proc": n} } }
-
-fbrk =
-	d: dyad rp: proc { return _.extend({"dyad": d}, rp)}
+	n: name a: args { return {"proc": n, "args": a} }
+	/ n: name r: ref+ {return {"proc":n, "refs": r} }
+	/ r: ref {return {"ref": r}}
+	/ n: name {return {"proc": n}}
 
 expr =
-  lp: proc d:fbrk* {if (d) { return [lp,d] } else { return lp }}
+	d: dyad rp: proc {return _.extend(rp, {"dyad": d})}
+	/ proc
 
 line =
-  "\t" " "* e:((lp:"("? ex:expr rp:")"? sp:" "?){return ex})+"\n" {return {"line":_.flatten(e)}}
+	"\t" " "* e:((lp:"("? ex:expr rp:")"? sp:" "?){return ex})+"\n" {return {"line":_.flatten(e)}}
 
 network =
-   i:"=>"? " "? id:name args:args?" "? o:"=>"? "\n" lines:line* "\n" {return {"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}
+	i:"=>"? " "? id:name args:args?" "? o:"=>"? "\n" lines:line* "\n" {return {"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}

@@ -3,7 +3,7 @@ main
 	trigger
 	filter
 	discretize ^ printSink
-	rle (.2)
+	rle + (.2)
 	dle * (0.1)
 	(") (.-2)
 	validTokenA ^ validTokenManchester ^ printSink
@@ -16,14 +16,14 @@ main
 testNesting =>
 	(rtlSource (434e6,256e3)) hello
 	printSink (printSink (a,b,c))
-
-=> test (a, b, c) =>
-	+ .3 .1
 	hello
 
-=> hello
-
-=> goodbye
+=> biquad (a0, a1, a2, b0, b1, b2) =>
+	+ (.3) (.4)
+	Z ^ * (b0)
+	* (-a1) ^ Z ^ * (b1)  + (.1) (.2)
+	+ (.-3) * (-a2) ^ * (b2) + (.-1) "
+	+ (.-4) (.-2) "
 
 
 
