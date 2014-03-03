@@ -3,20 +3,15 @@ main
 	trigger
 	filter
 	discretize ^ printSink
-	rle + (.2)
-	dle * (0.1)
-	(") (.-2)
+	rle
+	dle
 	validTokenA ^ validTokenManchester ^ printSink
-	(packetizer (36)) (manchesterd)
+	(packetizer (36)) (manchesterd (5e-5))
 	(decoder (14,2,12,8)) (packetizer (195))
-	(decoder (15,6,5,8,2,9,1,4,2,9,4)) (")
-	 sensorUnpackerA v sensorUnpackerB
-	udpTokenSink ('hello',9999) ^ printSink
-
-testNesting =>
-	(rtlSource (434e6,256e3)) hello
-	printSink (printSink (a,b,c))
-	hello
+	(") (decoder (15,6,5,8,2,9,1,4,2,9,4))
+	sensorUnpackerA v sensorUnpackerB
+	(")
+	udpTokenSink ('localhost',9999) ^ printSink
 
 => biquad (a0, a1, a2, b0, b1, b2) =>
 	+ (.3) (.4)
