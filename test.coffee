@@ -8,7 +8,7 @@ source = fs.readFileSync './temps.rat', {encoding:"utf8"}
 
 p = PEG.buildParser grammar
 v = _.compact p.parse source
-b = v[1]
+b = v[2]
 
 console.log JSON.stringify b, null, 1
 
@@ -28,18 +28,18 @@ edges = []
 b["lines"].forEach((e, i, l) ->
 	e.forEach (ee, ii, ll) ->
 		if i != 0
-			ai = ii - ll.slice(1,ii+1).filter((p) -> p.dyad == "^").length + l[i-1].slice(0, ii+1).filter((p) -> if p.refs then p.refs[0] < 0 else false).length
-			if ee.dyad == "^"
-				upper = l[i-1][ai]
-			else if ee.dyad == "v"
-				upper = l[i-1][ai]
+			ai = ii
+			ai -= ll.slice(0,ii+1).filter((p) -> p.dyad == "^").length
+			ai += l[i-1].slice(0, ii+1).filter((p) -> if p.refs then p.refs[0] < 0 else false).length
+			upper = l[i-1][ai]
+			if ee.dyad == "v"
 				edges.push [pname(ee), pname(l[i+1][ii-1])]
-			else
-				upper = l[i-1][ai]
 			if ee.refs == undefined or ee.refs.filter((p) -> p>0).length
+				console.log upper, ee, ai, l[i-1].length
 				edges.push [pname(upper), pname(ee)]
 			else
 				ee.refs.forEach (eee, iii, lll) ->
+					console.log upper, back, ee
 					back = (p for p in l[i+eee] when p.refs and -1*eee in p.refs)[0]
 					edges.push [pname(upper), pname(back), {label: eee}]
 		)
