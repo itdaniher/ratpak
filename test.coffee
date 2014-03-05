@@ -2,39 +2,51 @@ PEG = require 'pegjs'
 fs = require 'fs'
 util = require 'util'
 _ = require 'underscore'
-Springy = require 'springy'
 
 grammar = fs.readFileSync './rat.pegjs', {encoding:"utf8"}
 source = fs.readFileSync './temps.rat', {encoding:"utf8"}
 
-g = new Springy.Graph()
 p = PEG.buildParser grammar
 v = _.compact p.parse source
+b = v[2]
+
+pname = (a) ->
+	a.proc + a.pos.x + a.pos.y
 
 nodes = []
 
-_.flatten(v[0]["lines"]).map((y) -> 
-	label = if (y.args) == undefined then y.proc else y.proc + "(" + y.args + ")"
-	nodes.push [y.proc+y.pos.x+y.pos.y, {"label": label}]
+_.flatten(b["lines"]).map((p) ->
+	if not p.refs or p.refs[0] > 0
+		label = if (p.args) == undefined then p.proc else p.proc + "(" + p.args + ")"
+		nodes.push [pname(p),  {"label": label}]
 )
-
-b = v[0]["lines"]
 
 edges = []
 
-b.forEach((e, i, l) ->
+b["lines"].forEach((e, i, l) ->
 	e.forEach (ee, ii, ll) ->
 		if i != 0
-			if ee.dyad != "^"
-				upper = l[i-1][ii]
-				upperName = upper.proc + upper.pos.x + upper.pos.y
-			upperName = edges[edges.length-1][0] if ee.dyad == "^"
-			localName = ee.proc + ee.pos.x + ee.pos.y
-			edges.push [upperName, localName]
-			if ee.dyad == "v"
-				upper = l[i+1][ii-1]
-				upperName = upper.proc + upper.pos.x + upper.pos.y
-				edges.push [localName, upperName]
+			ai = ii - ll.slice(0,ii+1).filter((p) -> p.dyad == "^").length + l[i-1].slice(0, ii+1).filter((p) -> if p.refs then p.refs[0] < 0 else false).length
+			if ee.dyad == "^"
+				upper = l[i-1][ai]
+			else if ee.dyad == "v"
+				upper = l[i-1][ai]
+				edges.push [pname(ee), pname(l[i+1][ii-1])]
+			else
+				upper = l[i-1][ai]
+			if ee.refs == undefined or ee.refs.filter((p) -> p>0).length
+				edges.push [pname(upper), pname(ee)]
+			else
+				ee.refs.forEach (eee, iii, lll) ->
+					edges.push [pname(upper), (pname(p) for p in l[i+eee] when p.refs and -1*eee in p.refs)[0], {label: eee}]
 		)
 
-console.log(JSON.stringify({"edges": edges, "nodes": nodes}, null, 2))
+if b.out
+	nodes.push ["out", {"label": "out"}]
+	edges.push [edges[edges.length-1][1], "out"]
+
+if b.in
+	nodes.push ["in", {"label": "in"}]
+	edges.push ["in", nodes[0][0]]
+
+fs.writeFileSync "./springy/test.json", JSON.stringify({"edges": edges, "nodes": nodes}, null, 2), {encoding: "utf8"}

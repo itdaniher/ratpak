@@ -13,7 +13,7 @@ value =
 
 ref =
 	" "? "(" " "?r:ref " "? ")" " "? {return r}
-	/ r:$("." "-"? [0-9]+) {return r}
+	/ "."r:$("-"? [0-9]+) {return parseInt(r)}
 
 args = " "? "(" v:$value ")" " "? { return v}
 
