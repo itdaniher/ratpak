@@ -22,15 +22,15 @@ dyad = " "? op:[v^] " " {return op}
 proc =
 	n: name a: args { return {"proc": n, "args": a, "pos":{"x":line()-1, "y":column()-1}} }
 	/ n: name r: ref+ {return {"proc":n, "refs": r, "pos":{"x":line()-1, "y":column()-1}} }
-	/ r: ref {return {"ref": r, "pos":{"x":line()-1, "y":column()-1}}}
 	/ n: name {return {"proc": n, "pos":{"x":line()-1, "y":column()-1} }}
 
 expr =
-	d: dyad rp: proc {return _.extend(rp, {"dyad": d})}
+	" "? "(" " "? e:expr " "? ")" " "? {return e}
+	/ d: dyad rp: proc {return _.extend(rp, {"dyad": d})}
 	/ proc
 
 line =
-	"\t" " "* e:((lp:"("? ex:expr rp:")"? sp:" "?){return ex})+"\n" {return _.flatten(e)}
+	"\t" " "* e:((ex:expr " "?){return ex})+ "\n" {return _.flatten(e)}
 
 network =
 	i:"=>"? " "? id:name args:args?" "? o:"=>"? "\n" lines:line* "\n" {return {"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}
