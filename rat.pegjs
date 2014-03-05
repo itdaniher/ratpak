@@ -17,7 +17,7 @@ ref =
 	/ "."r:$("-"? [0-9]+) {return parseInt(r)}
 
 args =
-	" "? v:$([a-z0-9\'][a-z0-9\'\-]*","?" "?)+ " "? {return v}
+	" "? v:$("-"?[a-z0-9\'][a-z0-9\'\-]*","?" "?)+ " "? {return v}
 	/ " "? "(" v:$value ")" " "? { return v}
 
 modif = " "? op:[v^] " " {return op}

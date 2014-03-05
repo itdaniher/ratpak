@@ -8,7 +8,7 @@ source = fs.readFileSync './temps.rat', {encoding:"utf8"}
 
 p = PEG.buildParser grammar
 v = _.compact p.parse source
-b = v[0]
+b = v[2]
 
 console.log JSON.stringify b, null, 1
 
