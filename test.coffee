@@ -8,17 +8,17 @@ source = fs.readFileSync './temps.rat', {encoding:"utf8"}
 
 p = PEG.buildParser grammar
 v = _.compact p.parse source
-b = v[2]
+b = v[0]
 
 pname = (a) ->
-	a.proc + a.pos.x + a.pos.y
+	a.proc + ("00"+a.pos.x).slice(-3) + ("00"+a.pos.y).slice(-3)
 
 nodes = []
 
 _.flatten(b["lines"]).map((p) ->
 	if not p.refs or p.refs[0] > 0
 		label = if (p.args) == undefined then p.proc else p.proc + "(" + p.args + ")"
-		nodes.push [pname(p),  {"label": label}]
+		nodes.push [pname(p), {"label": label, "mass":p.length}]
 )
 
 edges = []
