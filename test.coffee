@@ -2,11 +2,12 @@ PEG = require 'pegjs'
 fs = require 'fs'
 util = require 'util'
 _ = require 'underscore'
+coffee = require 'pegjs-coffee-plugin'
 
-grammar = fs.readFileSync './rat.pegjs', {encoding:"utf8"}
+grammar = fs.readFileSync './rat.pegc', {encoding:"utf8"}
 source = fs.readFileSync './temps.rat', {encoding:"utf8"}
 
-p = PEG.buildParser grammar
+p = PEG.buildParser grammar, plugins: [coffee]
 v = _.compact p.parse source
 b = v[2]
 
