@@ -1,6 +1,5 @@
 {
 	@_ = require "underscore"
-	console.log @_
 }
 
 start =
