@@ -3,10 +3,10 @@
 }
 
 start =
-	n: network+ "\n\n" { n }
+	n: network+ { n }
 
 name =
-	$([+\*\&\>\<\-\/a-zA-Z"]+[0-9]*)
+	$([+\*\&\>\<\-a-zA-Z"]+[0-9]*)
 
 value =
 	$("-"?"0."?[a-zA-Z0-9']+","? " "?)+
@@ -21,20 +21,24 @@ args =
 	/ " "? "(" v:$value ")" " "? {v}
 
 modif = " "? op:[v^] " " {op}
+	/ op:"/" {op}
 
 proc =
-	"(" n: name a: args ")" { {"proc": n, "args": a, "pos":{"x":line()-1, "y":column()-1}} }
+	"(" n: name a: args ")" { {"proc": n, "args": a, "pos":{"x":line(), "y":column()}} }
 	/ " "? "(" " "? p:proc " "? ")" " "? {p}
-	/ n: name a: args { {"proc": n, "args": a, "pos":{"x":line()-1, "y":column()-1}} }
-	/ n: name r: ref+ { {"proc":n, "refs": r, "pos":{"x":line()-1, "y":column()-1}} }
-	/ n: name { {"proc": n, "pos":{"x":line()-1, "y":column()-1} }}
+	/ n: name a: args { {"proc": n, "args": a, "pos":{"x":line(), "y":column()}} }
+	/ n: name r: ref+ { {"proc":n, "refs": r, "pos":{"x":line(), "y":column()}} }
+	/ n: name { {"proc": n, "pos":{"x":line(), "y":column()} }}
 
 expr =
 	" "? "(" " "? e:expr " "? ")" " "? {e}
 	/ p: proc {p}
 	/ d: modif rp: proc {@_.extend(rp, {"modif": d})}
 	/ "(" " "? d: modif  rp:(proc " "?)+ " "? ")" {
-		@_.union rp[0][0], (@_.extend(p[0], {"modif":d}) for p in rp when (rp.indexOf p) > 0)
+		if d != "/"
+			@_.union rp[0][0], (@_.extend(p[0], {"modif":d}) for p in rp when (rp.indexOf p) > 0)
+		else
+			(@_.extend(p[0], {"modif":d}) for p in rp)
 	}
 
 line =
