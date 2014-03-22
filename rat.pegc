@@ -1,10 +1,14 @@
 {
 	@_ = require "underscore"
-	@uid = 0;
+	@start = 0
+	@row = 0
 }
 
 start =
 	n: network+ { n }
+
+proto =
+	p: name {@start = line(); p}
 
 name =
 	$([+\*\&\>\<\-a-zA-Z"?$]+[0-9]*)
@@ -13,29 +17,29 @@ names =
 	"(" " "? (n:name ","? " "?{n})+ " "? ")"
 
 float =
-	f: $("-"?"0."?[e0-9]+) {parseFloat(f)}
+	f: $("-"?"0."?[-e0-9]+) {parseFloat(f)}
 
 int =
 	i: $("-"? [0-9]+) {parseInt(i)}
 
 str =
-	s: "'" $[a-zA-Z0-9]+ "'"
+	"'" s:$[a-zA-Z0-9]+ "'" {s}
 
 value =
-	"(" " "? value+ " "? ")" ","? " "?
-	/ $(float ","? " "?)+
-	/ $(int ","? " "?)+
-	/ $(str ","? " "?)+
+	"(" " "? v:(value+) " "? ")" ","? " "? {v}
+	/ (f:float ","? " "?{f})+
+	/ (i:int ","? " "?{i})+
+	/ (s:str ","? " "?{s})+
 	/ name
 
 ref =
 	" "? "(" " "?r:ref " "? ")" " "? {r}
 	/ " " r:ref " "? {r}
-	/ "."r:$("-"? [0-9]+) {parseInt(r)}
+	/ "." r:int {r}
 
 args =
 	" "? "(" a:args+ ")" " "? {a}
-	/ " "? v:$(value)+ " "? {v}
+	/ " "? v:(value)+ " "? {v}
 
 modif =
 	" "? op:"^" " " {op}
@@ -43,9 +47,9 @@ modif =
 
 proc =
 	" "? "(" " "? p:proc " "? ")" " "? {p}
-	/ n: name r: ref+ { {"proc":n, "refs": r, "pos":{"x":line(), "y":column()}} }
-	/ n: name a: args { {"proc": n, "args": a, "pos":{"x":line(), "y":column()}} }
-	/ n: name { {"proc": n, "pos":{"x":line(), "y":column()} }}
+	/ n: name r: ref+ { @row += 1;{"proc":n, "refs": r, "pos":{"y":line() - @start, "x":@row}} }
+	/ n: name a: args { @row += 1;{"proc": n, "args": a, "pos":{"y":line() - @start, "x":@row}} }
+	/ n: name { @row += 1;{"proc": n, "pos":{"y":line() - @start, "x":@row} }}
 
 expr =
 	" "? "(" " "? e:expr " "? ")" " "? {e}
@@ -58,7 +62,7 @@ expr =
 	}
 
 line =
-	"\t" " "* ea:(expr " "?)+ "\n"{@_.without(@_.flatten(ea), null, " ")}
+	"\t" " "* ea:(expr " "?)+ "\n"{@row = 0; @_.without(@_.flatten(ea), null, " ")}
 
 network =
-	i:"=>"? " "? id:name " "? args:names? " "? o:"=>"? "\n" lines:line* "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}
+	i:"=>"? " "? id:proto " "? args:names? " "? o:"=>"? "\n" lines:line* "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}
