@@ -1,15 +1,14 @@
 main
-	rtlSource 434e6,256e3
+	rtlSource (434e6, 256e3)
 	trigger
 	filter
-	discretize ^ printSink
+	^ discretize printSink
 	rle
 	dle
-	(^ (validTokenA) (validTokenManchester 5e-5) printSink)
-	(packetizer 36) (manchesterd)
-	(decoder 14,2,12,8) (packetizer 195)
-	(") (decoder 15,6,5,8,2,9,1,4,2,9,4)
-	sensorUnpackerA sensorUnpackerB
+	^ ($ 2) (mandec 5e-5) printSink
+	(? (((1,5e-4), (0,2e-3)), ((1,5e-4), (0,4e-3)))) "
+	($ 36) ($ 195)
+	(b 14,2,12,8) (b 15,6,5,8,2,9,1,4,2,9,4)
 	/"
 	(^ udpTokenSink ('localhost',9999) printSink)
 
@@ -31,11 +30,11 @@ main
 => biquad-transposed-df2 (a0, a1, a2, b0, b1, b2) =>
 	"
 	(^ *b0 *b1 *b2)
-	+ .2 +.3 +.4
+	(+ .2) (+ .3) (+ .4)
 	" Z Z
-	(^ " *-a1 *-a2) +.-2 +.-2
-	" +.-3 "
-	" +.-4
+	(^ " *-a1 *-a2) (+ .-2) (+ .-2)
+	" (+ .-3) "
+	" (+ .-4)
 	"
 
 => triggerdiscretize =>
@@ -45,9 +44,10 @@ main
 
 => triggerdiscretize2 =>
 	"
-	(^ (lpf 1) (lpf 1e-5))
-	" > .1
-	> .-1
+	(^ " (< thresh) ")
+	" /&
+	(lpf 1e-5) (lpf 1)
+	/<
 
 => cube =>
 	"

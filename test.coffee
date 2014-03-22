@@ -26,6 +26,10 @@ _.flatten(b["lines"]).map((p) ->
 
 edges = []
 
+if b.in
+	nodes.push ["in000000", {"label": "in", "mass":1}]
+	b["lines"].unshift([{"proc": "in", "pos":{"x":0, "y":0}}])
+
 b["lines"].forEach((e, i, l) ->
 	e.forEach (ee, ii, ll) ->
 		if i != 0
@@ -36,9 +40,10 @@ b["lines"].forEach((e, i, l) ->
 			if ee.modif == "v"
 				edges.push [pname(ee), pname(l[i+1][ii-1])]
 			else if ee.modif == "/"
-				[1..l[i-1].length-1].forEach (x) ->
+				[1..l[i-1].length-ii-1].forEach (x) ->
 					edges.push [pname(l[i-1][ai+x]), pname(ee)]
 			if ee.refs == undefined or ee.refs.filter((p) -> p > 0).length
+				console.log upper, ee
 				edges.push [pname(upper), pname(ee)]
 			else if ee.refs.filter((p) -> p < 0).length
 				ee.refs.forEach (eee) ->
@@ -50,8 +55,5 @@ if b.out
 	nodes.push ["out", {"label": "out", "mass":1}]
 	edges.push [edges[edges.length-1][1], "out"]
 
-if b.in
-	nodes.push ["in", {"label": "in", "mass":1}]
-	edges.push ["in", nodes[0][0]]
 
 fs.writeFileSync "./springy/test.json", JSON.stringify({"edges": edges, "nodes": nodes}, null, 2), {encoding: "utf8"}

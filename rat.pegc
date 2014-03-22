@@ -1,15 +1,32 @@
 {
 	@_ = require "underscore"
+	@uid = 0;
 }
 
 start =
 	n: network+ { n }
 
 name =
-	$([+\*\&\>\<\-a-zA-Z"]+[0-9]*)
+	$([+\*\&\>\<\-a-zA-Z"?$]+[0-9]*)
+
+names =
+	"(" " "? (n:name ","? " "?{n})+ " "? ")"
+
+float =
+	f: $("-"?"0."?[e0-9]+) {parseFloat(f)}
+
+int =
+	i: $("-"? [0-9]+) {parseInt(i)}
+
+str =
+	s: "'" $[a-zA-Z0-9]+ "'"
 
 value =
-	$("-"?"0."?[a-zA-Z0-9']+","? " "?)+
+	"(" " "? value+ " "? ")" ","? " "?
+	/ $(float ","? " "?)+
+	/ $(int ","? " "?)+
+	/ $(str ","? " "?)+
+	/ name
 
 ref =
 	" "? "(" " "?r:ref " "? ")" " "? {r}
@@ -17,17 +34,17 @@ ref =
 	/ "."r:$("-"? [0-9]+) {parseInt(r)}
 
 args =
-	" "? v:$("-"?[a-z0-9\'][a-z0-9\'\-]*","?" "?)+ " "? {v}
-	/ " "? "(" v:$value ")" " "? {v}
+	" "? "(" a:args+ ")" " "? {a}
+	/ " "? v:$(value)+ " "? {v}
 
 modif =
-	" "? op:[v^] " " {op}
+	" "? op:"^" " " {op}
 	/ op:"/" {op}
 
 proc =
 	" "? "(" " "? p:proc " "? ")" " "? {p}
-	/ n: name a: args { {"proc": n, "args": a, "pos":{"x":line(), "y":column()}} }
 	/ n: name r: ref+ { {"proc":n, "refs": r, "pos":{"x":line(), "y":column()}} }
+	/ n: name a: args { {"proc": n, "args": a, "pos":{"x":line(), "y":column()}} }
 	/ n: name { {"proc": n, "pos":{"x":line(), "y":column()} }}
 
 expr =
@@ -44,4 +61,4 @@ line =
 	"\t" " "* ea:(expr " "?)+ "\n"{@_.without(@_.flatten(ea), null, " ")}
 
 network =
-	i:"=>"? " "? id:name args:args?" "? o:"=>"? "\n" lines:line* "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}
+	i:"=>"? " "? id:name " "? args:names? " "? o:"=>"? "\n" lines:line* "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}
