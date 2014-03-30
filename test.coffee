@@ -2,6 +2,7 @@ PEG = require 'pegjs'
 fs = require 'fs'
 util = require 'util'
 _ = require 'underscore'
+msgpack = require 'msgpack'
 coffee = require 'pegjs-coffee-plugin'
 
 grammar = fs.readFileSync './rat.pegc', {encoding:"utf8"}
@@ -20,8 +21,9 @@ nodes = []
 
 _.flatten(b["lines"]).map((p) ->
 	if p.refs == undefined or p.refs[0] >= 0
-		label = if (p.args) == undefined then p.proc else p.proc + "(" + (JSON.stringify p.args) + ")"
-		nodes.push [pname(p), {label: label, mass:p.length}]
+		if p.proc != "\""
+			label = if (p.args) == undefined then p.proc else p.proc + "(" + (JSON.stringify p.args) + ")"
+			nodes.push [pname(p), {proc: p.proc, label: label, mass:label.length, args:p.args}]
 )
 
 edges = []
@@ -54,5 +56,27 @@ if b.out
 	nodes.push ["out", {"label": "out", "mass":1}]
 	edges.push [edges[edges.length-1][1], "out"]
 
+edges2 = []
 
-fs.writeFileSync "./springy/test.json", JSON.stringify({"edges": edges, "nodes": nodes}, null, 2), {encoding: "utf8"}
+for edge in edges
+	if edge[0][0] == "\"" or edge[1][0] == "\""
+		if edge[0][0] == "\""
+			for source in (e for e in edges when e[1] == edge[0])
+				edges2.push [source[0], edge[1]]
+	else
+		edges2.push edge
+
+for node in nodes
+	ict = 0
+	oct = 0
+	for e in edges
+		if e[0] == node[0]
+			oct += 1
+		if e[1] == node[0]
+			ict += 1
+	node[1]["ict"] = ict
+	node[1]["oct"] = oct
+
+fs.writeFileSync "./temps.msgpack", msgpack.pack {"edges": edges, "nodes": nodes}
+
+fs.writeFileSync "./springy/test.json", JSON.stringify({"edges": edges2, "nodes": nodes}, null, 2), {encoding: "utf8"}

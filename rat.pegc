@@ -38,7 +38,7 @@ str =
 	"'" s:$[a-zA-Z0-9]+ "'" {s}
 
 values =
-	"(" " "? v:(values+) " "? ")" ","? " "? {v}
+	"(" " "? v:(values+) " "? ")" ","? " "? {if v.length == 1 then v[0] else v}
 	/ (f:float ","? " "?{f})+
 	/ (i:int ","? " "?{i})+
 	/ (s:str ","? " "?{s})+
