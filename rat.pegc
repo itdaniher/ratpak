@@ -11,7 +11,19 @@ proto =
 	p: name {@start = line(); p}
 
 name =
-	$([+\*\&\>\<\-a-zA-Z"?$]+[0-9]*)
+	"*"
+	/ "+"
+	/ "?"
+	/ "$"
+	/ "\""
+	/ ">"
+	/ "<"
+	/ "&"
+	/ "Z"
+	/ $([\-a-zA-Z]+[0-9]*)
+
+aname =
+	$("-"?[a-zA-Z]+[0-9]*)
 
 names =
 	"(" " "? (n:name ","? " "?{n})+ " "? ")"
@@ -25,21 +37,21 @@ int =
 str =
 	"'" s:$[a-zA-Z0-9]+ "'" {s}
 
-value =
-	"(" " "? v:(value+) " "? ")" ","? " "? {v}
+values =
+	"(" " "? v:(values+) " "? ")" ","? " "? {v}
 	/ (f:float ","? " "?{f})+
 	/ (i:int ","? " "?{i})+
 	/ (s:str ","? " "?{s})+
-	/ name
+	/ aname
 
 ref =
-	" "? "(" " "?r:ref " "? ")" " "? {r}
+	" "? "(" " "? r:ref " "? ")" " "? {r}
 	/ " " r:ref " "? {r}
 	/ "." r:int {r}
 
 args =
-	" "? "(" a:args+ ")" " "? {a}
-	/ " "? v:(value)+ " "? {v}
+	" "? "(" a:args ")" " "? {a}
+	/ " "? v:values " "? {v}
 
 modif =
 	" "? op:"^" " " {op}
@@ -65,4 +77,4 @@ line =
 	"\t" " "* ea:(expr " "?)+ "\n"{@row = 0; @_.without(@_.flatten(ea), null, " ")}
 
 network =
-	i:"=>"? " "? id:proto " "? args:names? " "? o:"=>"? "\n" lines:line* "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}
+	i:"=>"? " "? id:proto " "? args:names? " "? o:"=>"? "\n" lines:line+ "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}

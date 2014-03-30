@@ -14,13 +14,13 @@ b = v[0]
 console.log JSON.stringify b, null, 1
 
 pname = (a) ->
-	a.proc + ("00"+a.pos.x).slice(-3) + ("00"+a.pos.y).slice(-3)
+	a.proc + ("00"+a.pos.y).slice(-3) + ("00"+a.pos.x).slice(-3)
 
 nodes = []
 
 _.flatten(b["lines"]).map((p) ->
 	if p.refs == undefined or p.refs[0] >= 0
-		label = if (p.args) == undefined then p.proc else p.proc + "(" + p.args + ")"
+		label = if (p.args) == undefined then p.proc else p.proc + "(" + (JSON.stringify p.args) + ")"
 		nodes.push [pname(p), {label: label, mass:p.length}]
 )
 
@@ -43,7 +43,6 @@ b["lines"].forEach((e, i, l) ->
 				[1..l[i-1].length-ii-1].forEach (x) ->
 					edges.push [pname(l[i-1][ai+x]), pname(ee)]
 			if ee.refs == undefined or ee.refs.filter((p) -> p > 0).length
-				console.log upper, ee
 				edges.push [pname(upper), pname(ee)]
 			else if ee.refs.filter((p) -> p < 0).length
 				ee.refs.forEach (eee) ->
