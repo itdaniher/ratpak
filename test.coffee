@@ -15,7 +15,7 @@ b = v[0]
 console.log JSON.stringify b, null, 1
 
 pname = (a) ->
-	a.proc + ("00"+a.pos.y).slice(-3) + ("00"+a.pos.x).slice(-3)
+	("00"+a.pos.y).slice(-3) + ("00"+a.pos.x).slice(-3)
 
 nodes = []
 
@@ -29,7 +29,7 @@ _.flatten(b["lines"]).map((p) ->
 edges = []
 
 if b.in
-	nodes.push ["in000000", {"label": "in", "mass":1}]
+	nodes.push ["000000", {"label": "in", "mass":1}]
 	b["lines"].unshift([{"proc": "in", "pos":{"x":0, "y":0}}])
 
 b["lines"].forEach((e, i, l) ->
