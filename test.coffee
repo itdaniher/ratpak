@@ -19,6 +19,8 @@ pname = (a) ->
 
 nodes = []
 
+console.log b["lines"]
+
 _.flatten(b["lines"]).map((p) ->
 	if p.refs == undefined or p.refs[0] >= 0
 		if p.proc != "\""
@@ -34,14 +36,16 @@ if b.in
 
 b["lines"].forEach((e, i, l) ->
 	e.forEach (ee, ii, ll) ->
-		if i != 0
+		if i != 0 and ee.proc != "\""
 			ai = ii
 			ai -= ll.slice(1, ii+1).filter((p) -> p.modif == "^").length # drop forked procs from the running
 			ai += l[i-1].slice(0, ii+1).filter((p) -> if p.refs then p.refs[0] < 0 else false).length # drop refs on last line
 			upper = l[i-1][ai]
+			if upper.proc == "\""
+				upper = l[i-2][ai]
 			if ee.modif == "v"
 				edges.push [pname(ee), pname(l[i+1][ii-1])]
-			else if ee.modif == "/"
+			if ee.proc == "%"
 				[1..l[i-1].length-ii-1].forEach (x) ->
 					edges.push [pname(l[i-1][ai+x]), pname(ee)]
 			if ee.refs == undefined or ee.refs.filter((p) -> p > 0).length
@@ -56,16 +60,6 @@ if b.out
 	nodes.push ["out", {"label": "out", "mass":1}]
 	edges.push [edges[edges.length-1][1], "out"]
 
-edges2 = []
-
-for edge in edges
-	if edge[0][0] == "\"" or edge[1][0] == "\""
-		if edge[0][0] == "\""
-			for source in (e for e in edges when e[1] == edge[0])
-				edges2.push [source[0], edge[1]]
-	else
-		edges2.push edge
-
 for node in nodes
 	ict = 0
 	oct = 0
@@ -79,4 +73,4 @@ for node in nodes
 
 fs.writeFileSync "./temps.msgpack", msgpack.pack {"edges": edges, "nodes": nodes}
 
-fs.writeFileSync "./springy/test.json", JSON.stringify({"edges": edges2, "nodes": nodes}, null, 2), {encoding: "utf8"}
+fs.writeFileSync "./springy/test.json", JSON.stringify({"edges": edges, "nodes": nodes}, null, 2), {encoding: "utf8"}
