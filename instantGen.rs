@@ -1,22 +1,46 @@
 extern crate msgpack;
 use msgpack::{String, Array, Map, Unsigned, Double, Value, Nil};
 use std::str::eq;
+use std::vec;
 
 fn main () {
 	let x = include_bin!("temps.msgpack");
 	let y: msgpack::Value = msgpack::from_msgpack(x.to_owned());
+	let mut edges = ~[];
+	let mut nodes = ~[];
 	match y {
 		Map(x) => for v in x.move_iter() {
 			match v {
 				(String(a),Array(b)) => match a.slice_from(0) {
-					"edges" => println!("{:?}", unpackEdges(b)),
-					"nodes" => println!("{:?}", unpackNodes(b)),
+					"edges" => {edges = unpackEdges(b);},
+					"nodes" => {nodes = unpackNodes(b);},
 					_ => (),
 				},
 				(a,b) => println!("{:?}", (a,b))
 			}},
 		_ => ()
 	};
+	if ( nodes.len() & edges.len() ) > 0 {
+		for node in nodes.iter() {
+			let mut rxers = ~[];
+			let mut txers = ~[];
+			for edge in edges.iter() {
+				if node.uid == edge[0] {
+					let mut e = ~"tx";
+					e.push_str(edge[0].slice_from(0));
+					e.push_str(edge[1].slice_from(0));
+					txers.push(e);
+				}
+				if node.uid == edge[1] {
+						let mut e = ~"rx";
+						e.push_str(edge[0]);
+						e.push_str(edge[1]);
+						rxers.push(e);
+				}
+			}
+			println!("{:?}", (txers,rxers));
+		}
+	}
 }
 
 fn unpackEdges(In: ~[Value]) -> ~[~[~str]] {
@@ -29,7 +53,7 @@ struct Node {
 	label: ~str,
 	oct: uint,
 	ict: uint,
-	args: ~[Value]
+	args: ~[Value],
 }
 
 fn unpackNodes(In: ~[Value]) -> ~[Node] {
@@ -47,7 +71,7 @@ fn unpackNodes(In: ~[Value]) -> ~[Node] {
 				match (y.shift(), y.shift()) {
 					(Some(String(a)), Some(Map(b))) => {
 					uid = a;
-					b.move_iter().map( |c| { match c {
+					for c in b.move_iter() { match c {
 						(String(d), String(e)) => match d.slice_from(0) {
 							"proc" => {pname = e;}
 							"label" => {label = e;}
@@ -63,11 +87,11 @@ fn unpackNodes(In: ~[Value]) -> ~[Node] {
 							_ => ()
 						},
 						(String(d), Nil) => match d.slice_from(0) {
-							"args" => {args=~[Nil];},
+							"args" => {args=~[];},
 							_ => ()
 						},
 						(d, e) => println!("{:?}", (d,e)),
-					};}).last();
+					}};
 				out.push(Node{uid: uid.clone(), pname: pname.clone(), label: label.clone(), oct: oct.clone(), ict: ict.clone(), args: args});
 				}
 				x => println!("{:?}", x)

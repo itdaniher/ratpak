@@ -40,10 +40,10 @@ str =
 
 values =
 	"(" " "? v:(values+) " "? ")" ","? " "? {if v.length == 1 then v[0] else v}
+	/ aname
 	/ (f:float ","? " "?{f})+
 	/ (i:int ","? " "?{i})+
 	/ (s:str ","? " "?{s})+
-	/ aname
 	/ "[" " "? v:values " "? "]" {[v]}
 
 ref =
