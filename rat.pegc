@@ -52,7 +52,7 @@ ref =
 	/ "." r:int {r}
 
 args =
-	" "? "(" a:args ")" " "? {((if x.length == 1 then x[0] else x) for x in a)}
+	" "? "(" a:args ")" " "? {if typeof(a) != 'string' then ((if x.length == 1 then x[0] else x) for x in a) else a}
 	/ " "? v:values " "? {((if x.length == 1 then x[0] else x) for x in v)}
 
 modif =
