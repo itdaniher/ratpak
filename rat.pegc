@@ -10,24 +10,28 @@ start =
 proto =
 	p: name {@start = line(); p}
 
+argless =
+	"Z"
+	/ "%"
+	/ "\""
+
 name =
 	"*"
 	/ "%"
 	/ "+"
 	/ "?"
 	/ "$"
-	/ "\""
 	/ ">"
 	/ "<"
 	/ "&"
-	/ "Z"
-	/ $([\-a-zA-Z]+[0-9]*)
+	/ aname
 
 aname =
-	$("-"?[a-zA-Z]+[0-9]*)
+	a: $([\-a-zA-Z]+[0-9]*)
+	/ a: $("-"?[a-zA-Z]+[0-9]*)
 
 names =
-	"(" " "? (n:name ","? " "?{n})+ " "? ")"
+	"(" " "? ns:($(n:name ","? " "?{n})+) " "? ")" {ns}
 
 float =
 	f: $("-"?"0."?[-e0-9]+) {parseFloat(f)}
@@ -36,15 +40,15 @@ int =
 	i: $("-"? [0-9]+) {parseInt(i)}
 
 str =
-	"'" s:$[a-zA-Z0-9]+ "'" {s}
+	"'" s:$([a-zA-Z0-9]+) "'" {s}
 
 values =
 	"(" " "? v:(values+) " "? ")" ","? " "? {if v.length == 1 then v[0] else v}
-	/ aname
 	/ (f:float ","? " "?{f})+
 	/ (i:int ","? " "?{i})+
 	/ (s:str ","? " "?{s})+
 	/ "[" " "? v:values " "? "]" {[v]}
+	/ aname
 
 ref =
 	" "? "(" " "? r:ref " "? ")" " "? {r}
@@ -52,8 +56,8 @@ ref =
 	/ "." r:int {r}
 
 args =
-	" "? "(" a:args ")" " "? {if typeof(a) != 'string' then ((if x.length == 1 then x[0] else x) for x in a) else a}
-	/ " "? v:values " "? {((if x.length == 1 then x[0] else x) for x in v)}
+	" "? "(" a:args ")" " "? {a}
+	/ " "? v:values " "? {if typeof(v) != 'string' then ((if x.length == 1 then x[0] else x) for x in v) else v}
 
 modif =
 	" "? op:"^" " " {op}
@@ -61,6 +65,7 @@ modif =
 
 proc =
 	" "? "(" " "? p:proc " "? ")" " "? {p}
+	/ n: argless { @row += 1;{"proc": n, "pos":{"y":line() - @start, "x":@row} }}
 	/ n: name r: ref+ { @row += 1;{"proc":n, "refs": r, "pos":{"y":line() - @start, "x":@row}} }
 	/ n: name a: args { @row += 1;{"proc": n, "args": a, "pos":{"y":line() - @start, "x":@row}} }
 	/ n: name { @row += 1;{"proc": n, "pos":{"y":line() - @start, "x":@row} }}
