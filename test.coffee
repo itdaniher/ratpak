@@ -10,9 +10,7 @@ source = fs.readFileSync './temps.rat', {encoding:"utf8"}
 
 p = PEG.buildParser grammar, plugins: [coffee]
 v = _.compact p.parse source
-b = v[2]
-
-console.log JSON.stringify b, null, 1
+b = v[0]
 
 uidgen = (a) ->
 	("00"+a.pos.y).slice(-3) + ("00"+a.pos.x).slice(-3)
@@ -21,8 +19,6 @@ nodes = []
 
 if b.in
 	b["lines"].unshift([{"proc": "in", "pos":{"x":0, "y":0}}])
-
-console.log b["lines"]
 
 _.flatten(b["lines"]).map (p) ->
 	if p.refs == undefined or p.refs[0] >= 0
@@ -77,6 +73,10 @@ for node in nodes
 	node[1]["ict"] = ict
 	node[1]["oct"] = oct
 
-fs.writeFileSync "./temps.json", JSON.stringify({"edges": edges, "nodes": nodes}, null, 2), {encoding: "utf8"}
+outText = JSON.stringify({"edges": edges, "nodes": nodes}, null, 2)
 
-fs.writeFileSync "./springy/test.json", JSON.stringify({"edges": edges, "nodes": nodes}, null, 2), {encoding: "utf8"}
+console.log outText
+
+fs.writeFileSync "./temps.json", outText, {encoding: "utf8"}
+
+fs.writeFileSync "./springy/test.json", outText, {encoding: "utf8"}

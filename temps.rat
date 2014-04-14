@@ -1,4 +1,13 @@
 main
+	rtlSource (434e6, 402e-1, 256e3)
+	trigger
+	filter
+	discretize
+	rle
+	dle 256e3
+	printSink
+
+main
 	rtlSource (434e6, 256e3)
 	trigger
 	filter
