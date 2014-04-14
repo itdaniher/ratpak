@@ -2,9 +2,7 @@ PEG = require 'pegjs'
 fs = require 'fs'
 util = require 'util'
 _ = require 'underscore'
-msgpack = require 'msgpack'
 coffee = require 'pegjs-coffee-plugin'
-
 grammar = fs.readFileSync './rat.pegc', {encoding:"utf8"}
 source = fs.readFileSync './temps.rat', {encoding:"utf8"}
 
@@ -75,8 +73,4 @@ for node in nodes
 
 outText = JSON.stringify({"edges": edges, "nodes": nodes}, null, 2)
 
-console.log outText
-
 fs.writeFileSync "./temps.json", outText, {encoding: "utf8"}
-
-fs.writeFileSync "./springy/test.json", outText, {encoding: "utf8"}

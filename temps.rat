@@ -1,5 +1,5 @@
 main
-	rtlSource (434e6, 402e-1, 256e3)
+	rtlSource (434e6, 402, 256e3)
 	trigger
 	filter
 	discretize
