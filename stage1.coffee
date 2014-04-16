@@ -8,8 +8,8 @@ source = fs.readFileSync './temps.rat', {encoding:"utf8"}
 
 p = PEG.buildParser grammar, plugins: [coffee]
 v = _.compact p.parse source
-b = v[0]
-
+i = if process.argv.length > 2 then parseInt(process.argv[2]) else 0
+b = v[i]
 uidgen = (a) ->
 	("00"+a.pos.y).slice(-3) + ("00"+a.pos.x).slice(-3)
 
@@ -71,6 +71,5 @@ for node in nodes
 	node[1]["ict"] = ict
 	node[1]["oct"] = oct
 
-outText = JSON.stringify({"edges": edges, "nodes": nodes}, null, 2)
-
-fs.writeFileSync "./temps.json", outText, {encoding: "utf8"}
+outText = JSON.stringify({"edges": edges, "nodes": nodes, "name":b.name, "inrx":b.in, "outtx":b.out, "consts":b.const}, null, 2)
+console.log outText

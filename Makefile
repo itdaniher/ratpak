@@ -1,21 +1,21 @@
-all: temps
+all: clean stage3
 
-temps.json:
-	coffee test.coffee
+stage2.json:
+	coffee stage1.coffee 2 > stage2.json
 
 libast.so:
 	rustc -O --crate-type=dylib ast.rs
 
-instantGen: libast.so
-	rustc -O -L./ instantGen.rs
+stage2: libast.so
+	rustc -O -L./ stage2.rs
 
-temps.rs: temps.json instantGen
-	./instantGen > temps.rs
+stage3.rs: stage2 stage2.json
+	./stage2 > stage3.rs
 
-temps: temps.rs
-	rustc -O -L../lib/ temps.rs
+stage3: stage3.rs
+	rustc -O -L../lib/ stage3.rs
 
 clean:
-	rm libast*.so
-	rm instantGen
-	rm temps.json temps
+	rm -f libast*.so
+	rm -f stage2
+	rm -f stage2.json stage3.rs

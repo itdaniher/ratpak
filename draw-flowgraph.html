@@ -5,7 +5,7 @@
 <script src="http://getspringy.com/springyui.js"></script>
 <script>
 	var graph = new Springy.Graph();
-	jQuery.getJSON('temps.json',
+	jQuery.getJSON('stage2.json',
 		function(x){
 			for (var i = 0; i < x["nodes"].length; i++) {
 				graph.addNode(new Springy.Node(x["nodes"][i][0], x["nodes"][i][1]));

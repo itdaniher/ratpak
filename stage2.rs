@@ -21,11 +21,15 @@ struct Node {
 #[deriving(Decodable,Encodable)]
 struct Graph {
 	edges: ~[~[~str]],
-	nodes: ~[(~str, Node)]
+	nodes: ~[(~str, Node)],
+	name: ~str,
+	consts: Option<~[~str]>,
+	inrx: bool,
+	outtx: bool,
 }
 
 fn main () {
-	let json_str_to_decode = File::open(&Path::new("./temps.json")).read_to_str().unwrap();
+	let json_str_to_decode = File::open(&Path::new("./stage2.json")).read_to_str().unwrap();
 	let json_object = json::from_str(json_str_to_decode.to_owned()).unwrap();
 	let mut decoder = json::Decoder::new(json_object.clone());
 	let args: ~[&json::Json] = json_object.search(&~"nodes").unwrap().as_list().unwrap().iter().map(|x| {x.as_list().unwrap()[1].find(&~"args").unwrap()}).collect();
@@ -65,8 +69,8 @@ fn main () {
 		argv.push_all_move(match JSONtoAST(arg.clone()) {
 			Some(lits) => {
 				match lits {
-				syntax::ast::ExprVec(v) => v,
-				_ => fail!("{:?}", lits)
+					syntax::ast::ExprVec(v) => v,
+					_ => fail!("{:?}", lits)
 			}}
 			None => vec!()
 		});
@@ -77,7 +81,7 @@ fn main () {
 		}).last();
 	}
 	channelStmts.push_all_move(spawnExprs.move_iter().map(|x| stmt_semi(x)).collect());
-	let main = fn_item("main", vec!(), ty_nil(), block(channelStmts, None));
+	let main = fn_item(y.name, vec!(), ty_nil(), block(channelStmts, None));
 	println!("{}", include_str!("boilerplate.rs"));
 	println!("{}", syntax::print::pprust::item_to_str(&main));
 }
