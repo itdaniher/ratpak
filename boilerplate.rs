@@ -8,3 +8,5 @@ use rtlsdr::*;
 use kpn::*;
 use bitfount::*;
 
+static localhost: &str = "localhost";
+

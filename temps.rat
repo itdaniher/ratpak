@@ -21,14 +21,14 @@ main
 	%
 	(^ udpTokenSink ('localhost',9999) printSink)
 
-=> biquad-df1 (a0, a1, a2, b0, b1, b2) =>
+=> biquaddf1 (a0, a1, a2, b0, b1, b2) =>
 	+ .3 .4
 	^ Z *b0
 	(^ *-a1 Z *b1) (+ .1 .2)
 	+.-3 (^ *-a2 *b2) +.-1
 	+.-4 +.-2
 
-=> biquad-df2 (a0, a1, a2, b0, b1, b2) =>
+=> biquaddf2 (a0, a1, a2, b0, b1, b2) =>
 	^ Z *b0
 	(^ Z *b1) (^ Z (+ .3 .2 .1))
 	*b2 +.-1 (^ Z *-a1)

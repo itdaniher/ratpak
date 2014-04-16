@@ -21,6 +21,7 @@ pub fn path(name: &str) -> ast::Path {
 			ast::PathSegment {
 				identifier: token::str_to_ident(name),
 				lifetimes: Default::default(),
+				// TODO: some way to change the type allowing this constructor to be used for fndef
 				types: Default::default(),
 			}
 		),
@@ -93,6 +94,10 @@ pub fn expr_path(p: &str) -> P<ast::Expr> {
 
 pub fn expr_tuple(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
 	expr(ast::ExprTup(l))
+}
+
+pub fn expr_vec(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
+	expr(ast::ExprVec(l))
 }
 
 pub fn expr_call(f: P<ast::Expr>, args: Vec<P<ast::Expr>>) -> P<ast::Expr> {
@@ -179,10 +184,14 @@ pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
 	match jsonobj {
 		json::Number(v) if (v - (v as int) as f64).abs() < 10.0*Float::epsilon() => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitIntUnsuffixed(v as i64))))),
 		json::Number(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v))))))),
-		json::String(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitStr(intern_and_get_ident(v.slice_from(0)), ast::CookedStr))))),
+		json::String(v) => Some(ast::ExprPath(path(v.slice_from(0)))), //Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitStr(intern_and_get_ident(v.slice_from(0)), ast::CookedStr))))),
 		json::List(l) => Some(ast::ExprVec(l.move_iter().filter_map(|a| {JSONtoAST(a)}).map(|a| expr(a)).collect())),
 		json::Boolean(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitBool(v))))),
 		json::Null => None,
 		_ => None
 	}
+}
+
+pub fn main() {
+	println!("{:?}", parse_stmt("a:u32"))
 }

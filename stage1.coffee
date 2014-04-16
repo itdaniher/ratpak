@@ -57,7 +57,7 @@ b["lines"].forEach (e, i, l) ->
 						edges.push [uidgen(upper), uidgen(back)]#, {label: eee}]
 
 if b.out
-	nodes.push ["999999", {"label": "out", "pname": "999999", "args": null}]
+	nodes.push ["999999", {"label": "out", "pname": "out", "args": null}]
 	edges.push [edges[edges.length-1][1], "999999"]
 
 for node in nodes
