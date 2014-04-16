@@ -6,6 +6,7 @@ extern crate ast;
 
 use std::io::File;
 use std::path::Path;
+use std::strbuf::StrBuf;
 use ast::*;
 use serialize::{json, Encodable, Decodable};
 
@@ -41,16 +42,16 @@ fn main () {
 		let mut txers: ~[~str] = ~[];
 		for edge in y.edges.iter() {
 			if uid == edge[0] {
-				let mut e = ~"tx";
+				let mut e = StrBuf::from_str("tx");
 				e.push_str(edge[0]);
 				e.push_str(edge[1]);
-				txers.push(e);
+				txers.push(e.into_owned());
 			}
 			else if uid == edge[1] {
-				let mut e = ~"rx";
+				let mut e = StrBuf::from_str("rx");
 				e.push_str(edge[0]);
 				e.push_str(edge[1]);
-				rxers.push(e);
+				rxers.push(e.into_owned());
 			}
 			else {
 			}

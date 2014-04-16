@@ -42,7 +42,7 @@ pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: ast::P<ast::Ty>, block
 		ident: token::str_to_ident(name),
 		attrs: vec!(),
 		id: 0,
-		node: ast::ItemFn(ast::P(decl), ast::ImpureFn, abi::Rust, generics, block),
+		node: ast::ItemFn(ast::P(decl), ast::NormalFn, abi::Rust, generics, block),
 		vis: ast::Public,
 		span: codemap::DUMMY_SP,
 	}
