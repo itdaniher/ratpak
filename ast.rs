@@ -10,9 +10,7 @@ use syntax::ast::P;
 use syntax::ast_util;
 use syntax::codemap;
 use syntax::parse::token;
-use syntax::print::pprust;
 use syntax::abi;
-use syntax::parse;
 use syntax::parse::token::intern_and_get_ident;
 
 pub fn path(name: &str) -> ast::Path {
