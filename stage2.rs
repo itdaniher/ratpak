@@ -21,10 +21,10 @@ struct Node {
 
 #[deriving(Decodable,Encodable)]
 struct Graph {
-	edges: ~[~[~str]],
-	nodes: ~[(~str, Node)],
+	edges: Vec<Vec<~str>>,
+	nodes: Vec<(~str, Node)>,
 	name: ~str,
-	consts: Option<~[~str]>,
+	consts: Option<Vec<~str>>,
 	inrx: bool,
 	outtx: bool,
 }
@@ -48,19 +48,19 @@ fn main () {
 	let mut channelStmts: Vec<ast::P<ast::Stmt>> = vec!();
 	let mut spawnExprs: Vec<ast::P<ast::Expr>> = vec!();
 	for ((uid, node), arg) in y.nodes.clone().move_iter().zip(args.move_iter()) {
-		let mut rxers: ~[~str] = ~[];
-		let mut txers: ~[~str] = ~[];
+		let mut rxers: Vec<~str> = vec!();
+		let mut txers: Vec<~str> = vec!();
 		for edge in y.edges.iter() {
-			if uid == edge[0] {
+			if &uid == edge.get(0) {
 				let mut e = StrBuf::from_str("tx");
-				e.push_str(edge[0]);
-				e.push_str(edge[1]);
+				e.push_str(edge.get(0).clone());
+				e.push_str(edge.get(1).clone());
 				txers.push(e.into_owned());
 			}
-			else if uid == edge[1] {
+			else if &uid == edge.get(1) {
 				let mut e = StrBuf::from_str("rx");
-				e.push_str(edge[0]);
-				e.push_str(edge[1]);
+				e.push_str(edge.get(0).clone());
+				e.push_str(edge.get(1).clone());
 				rxers.push(e.into_owned());
 			}
 			else {
@@ -80,9 +80,9 @@ fn main () {
 			else if nodepname.slice_from(0) == "?" {("matcher".to_str(), eps())}
 			else {(nodepname, match (rxers.len(), txers.len()) {
 				(0, 0) => vec!(),
-				(1, 0) => vec!(expr_path(rxers[0].slice_from(0))),
-				(0, 1) => vec!(expr_path(txers[0].slice_from(0))),
-				(1, 1) => vec!(expr_path(rxers[0].slice_from(0)), expr_path(txers[0].slice_from(0))),
+				(1, 0) => vec!(expr_path(rxers.get(0).slice_from(0))),
+				(0, 1) => vec!(expr_path(txers.get(0).slice_from(0))),
+				(1, 1) => vec!(expr_path(rxers.get(0).slice_from(0)), expr_path(txers.get(0).slice_from(0))),
 				(_, _) => eps()
 			})};
 
