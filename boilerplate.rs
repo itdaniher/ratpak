@@ -50,3 +50,12 @@ pub fn grapes<T: Send>( u: ~[std::comm::Receiver<T>], v: std::comm::Sender<T>) {
 		v.send(u[hids.iter().enumerate().filter_map(|(a, &b)| if b == y { Some(a) } else { None }).next().unwrap()].recv());
 	}
 }
+
+pub fn Z<T: Send+Clone>( u: std::comm::Receiver<T>, v: std::comm::Sender<T>) {
+	let x = u.recv();
+	v.send(x.clone());
+	v.send(x.clone());
+	loop {
+		v.send(u.recv());
+	}
+}

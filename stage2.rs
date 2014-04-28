@@ -71,28 +71,33 @@ fn main () {
 		let eps = || {vec!(expr_vec(rxers.iter().map(|x| expr_path(x.slice_from(0))).collect()),
 			expr_vec(txers.iter().map(|x| expr_path(x.slice_from(0))).collect()))};
 
-		let (n, mut argv) = if nodepname.slice_from(0) == "*" {("mulAcross".to_str(), eps())}
-			else if nodepname.slice_from(0) == "+" {("sumAcross".to_str(), eps())}
-			else if nodepname.slice_from(0) == "Z" {("delay".to_str(), eps())}
-			else if nodepname.slice_from(0) == "%" {("grapes".to_str(), eps())}
-			else if nodepname.slice_from(0) == "b" {("binconv".to_str(), eps())}
-			else if nodepname.slice_from(0) == "$" {("shaper".to_str(), eps())}
-			else if nodepname.slice_from(0) == "?" {("matcher".to_str(), eps())}
-			else {(nodepname, match (rxers.len(), txers.len()) {
-				(0, 0) => vec!(),
-				(1, 0) => vec!(expr_path(rxers.get(0).slice_from(0))),
-				(0, 1) => vec!(expr_path(txers.get(0).slice_from(0))),
-				(1, 1) => vec!(expr_path(rxers.get(0).slice_from(0)), expr_path(txers.get(0).slice_from(0))),
-				(1, _) => {
+		let n = if nodepname.slice_from(0) == "*" { "mulAcross".to_str() }
+			else if nodepname.slice_from(0) == "+" {"sumAcross".to_str()}
+			else if nodepname.slice_from(0) == "Z" {"delay".to_str()}
+			else if nodepname.slice_from(0) == "%" {"grapes".to_str()}
+			else if nodepname.slice_from(0) == "b" {"binconv".to_str()}
+			else if nodepname.slice_from(0) == "$" {"shaper".to_str()}
+			else if nodepname.slice_from(0) == "?" {"matcher".to_str()}
+			else { nodepname};
+
+		let mut argv = match (rxers.len(), txers.len()) {
+			(0, 0) => vec!(),
+			(1, 0) => vec!(expr_path(rxers.get(0).slice_from(0))),
+			(0, 1) => vec!(expr_path(txers.get(0).slice_from(0))),
+			(1, 1) => vec!(expr_path(rxers.get(0).slice_from(0)), expr_path(txers.get(0).slice_from(0))),
+			(x, y) => {
+				vec!( if x > 1 { expr_owned_vec(rxers.iter().map(|x| expr_path(x.slice_from(0))).collect()) }
+				else { expr_path(rxers.get(0).slice_from(0)) },
+				if y > 1 {
 					let ftx = txers.get(0).slice_to(13).to_str().append("0");
 					let frx = (~"r").append(ftx.slice_from(1));
 					spawnExprs.push(spawn(expr_call(expr_path("fork".to_str()), vec!(expr_path(frx), expr_owned_vec(txers.iter().map(|x| expr_path(x.slice_from(0))).collect())))));
 					channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.clone()), pat_name(frx.clone()))), expr_call(expr_path("std::comm::channel"), vec!())));
-					vec!(expr_path(rxers.get(0).slice_from(0)), expr_path(ftx))
+					expr_path(ftx)
 				}
-				(_, _) => fail!()
-			})};
-
+				else { expr_path(txers.get(0).slice_from(0)) }
+				)}
+			};
 		argv.push_all_move(
 			match JSONtoAST(arg.clone()) {
 				Some(lits) => {
