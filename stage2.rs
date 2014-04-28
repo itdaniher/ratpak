@@ -83,7 +83,14 @@ fn main () {
 				(1, 0) => vec!(expr_path(rxers.get(0).slice_from(0))),
 				(0, 1) => vec!(expr_path(txers.get(0).slice_from(0))),
 				(1, 1) => vec!(expr_path(rxers.get(0).slice_from(0)), expr_path(txers.get(0).slice_from(0))),
-				(_, _) => eps()
+				(1, _) => {
+					let ftx = txers.get(0).slice_to(13).to_str().append("0");
+					let frx = (~"r").append(ftx.slice_from(1));
+					spawnExprs.push(spawn(expr_call(expr_path("fork".to_str()), vec!(expr_path(frx), expr_owned_vec(txers.iter().map(|x| expr_path(x.slice_from(0))).collect())))));
+					channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.clone()), pat_name(frx.clone()))), expr_call(expr_path("std::comm::channel"), vec!())));
+					vec!(expr_path(rxers.get(0).slice_from(0)), expr_path(ftx))
+				}
+				(_, _) => fail!()
 			})};
 
 		argv.push_all_move(

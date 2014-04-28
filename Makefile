@@ -1,7 +1,7 @@
 all: clean stage3
 
 stage2.json:
-	coffee stage1.coffee 1 > stage2.json
+	coffee stage1.coffee 0 > stage2.json
 
 libabstrast.so:
 	rustc -O --crate-type=dylib abstrast.rs

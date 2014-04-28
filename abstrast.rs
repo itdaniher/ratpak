@@ -84,6 +84,10 @@ pub fn expr_str(s: &str) -> P<ast::Expr> {
 	expr_lit(ast::LitStr(intern_and_get_ident(s), ast::CookedStr))
 }
 
+pub fn expr_owned_vec(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
+	expr(ast::ExprVstore(expr_vec(l), ast::ExprVstoreUniq))
+}
+
 pub fn expr_char(c: char) -> P<ast::Expr> {
 	expr_lit(ast::LitChar(c as u32))
 }
@@ -193,5 +197,5 @@ pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
 }
 
 pub fn main() {
-	println!("{:?}", parse_stmt("a:u32"))
+	println!("{:?}", parse_stmt("let x = ~[0f32]"))
 }

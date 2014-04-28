@@ -2,7 +2,7 @@ main
 	rtlSource (434e6, 402, 256e3)
 	trigger
 	filter
-	discretize
+	^ (discretize) vidSink
 	rle
 	dle 256e3
 	printSink
