@@ -2,25 +2,10 @@ main
 	rtlSourceCmplx 434e6, 402, 256e3
 	^ (normify) (FFT 512, 0)
 	(trigger) (normify)
-	(.* [lpf]) (vidSink)
-	discretize
+	(discretize) vidSink
 	rle
 	dle 256e3
 	$2
-	(? (((1,5e-4), (0,2e-3)), ((1,5e-4), (0,4e-3))))
-	$36
-	printSink
-
-main
-	rtlSourceCmplx 434e6, 402, 256e3
-	^ (normify) (FFT 512, 0)
-	(trigger) (normify)
-	(filter) (vidSink)
-	discretize
-	rle
-	dle 256e3
-	$2
-	(? (((1,5e-4), (0,2e-3)), ((1,5e-4), (0,4e-3))))
 	$36
 	printSink
 

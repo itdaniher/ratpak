@@ -6,6 +6,7 @@ extern crate native;
 extern crate vidsink2;
 extern crate kissfft;
 extern crate num;
+extern crate dsputils;
 
 use num::complex;
 use kissfft::FFT;
@@ -17,6 +18,8 @@ use std::comm::{Receiver, Sender, Select, Handle, channel};
 use std::num;
 
 static localhost: &'static str = "localhost";
+
+pub fn asRe<T: Float> ( d: Vec<T> ) -> Vec<complex::Cmplx<T>> { d.iter().map(|&x| {complex::Cmplx {re: x, im: num::zero()}}).collect() }
 
 pub fn fork<T: Clone+Send>(u: Receiver<T>, v: ~[Sender<T>]) {
 	loop {
@@ -33,9 +36,9 @@ pub fn mulAcross<T: Float+Send>(u: ~[Receiver<T>], v: Sender<T>, c: T) {
 	}
 }
 
-pub fn mulAcrossVecs<T: Float+Send>(u: ~[Receiver<T>], v: Sender<T>, c: T) {
+pub fn mulAcrossVecs<T: Float+Send>(u: Receiver<Vec<T>>, v: Sender<Vec<T>>, c: Vec<T>) {
 	loop {
-		v.send(u.iter().map(|y| y.recv()).fold(c, |b, a| a.iter().zip(b.iter()).map(|(x, y)| x*y).collect()))
+		v.send(u.recv().iter().zip(c.iter()).map(|(&x, &y)| x*y).collect())
 	}
 }
 

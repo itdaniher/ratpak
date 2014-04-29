@@ -65,7 +65,7 @@ fn main () {
 		}
 		let nodepname = node.pname;
 
-		let n = if nodepname.slice_from(0) == ".*" { "mulAcrossVecs".to_str() }
+		let n = if nodepname.slice_from(0) == "*." { "mulAcrossVecs".to_str() }
 			else if nodepname.slice_from(0) == "*" { "mulAcross".to_str() }
 			else if nodepname.slice_from(0) == "+" {"sumAcross".to_str()}
 			else if nodepname.slice_from(0) == "Z" {"delay".to_str()}
