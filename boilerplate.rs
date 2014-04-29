@@ -4,12 +4,17 @@ extern crate bitfount;
 extern crate rtlsdr;
 extern crate native;
 extern crate vidsink2;
+extern crate kissfft;
+extern crate num;
 
+use num::complex;
+use kissfft::FFT;
 use rtlsdr::*;
 use kpn::*;
 use bitfount::*;
 use vidsink2::*;
 use std::comm::{Receiver, Sender, Select, Handle, channel};
+use std::num;
 
 static localhost: &'static str = "localhost";
 
@@ -25,6 +30,12 @@ pub fn fork<T: Clone+Send>(u: Receiver<T>, v: ~[Sender<T>]) {
 pub fn mulAcross<T: Float+Send>(u: ~[Receiver<T>], v: Sender<T>, c: T) {
 	loop {
 		v.send(u.iter().map(|y| y.recv()).fold(c, |b, a| b*a))
+	}
+}
+
+pub fn mulAcrossVecs<T: Float+Send>(u: ~[Receiver<T>], v: Sender<T>, c: T) {
+	loop {
+		v.send(u.iter().map(|y| y.recv()).fold(c, |b, a| a.iter().zip(b.iter()).map(|(x, y)| x*y).collect()))
 	}
 }
 

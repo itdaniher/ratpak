@@ -60,16 +60,5 @@ if b.out
 	nodes.push ["999999", {"label": "out", "pname": "out", "args": null}]
 	edges.push [edges[edges.length-1][1], "999999"]
 
-for node in nodes
-	ict = 0
-	oct = 0
-	for e in edges
-		if e[0] == node[0]
-			oct += 1
-		if e[1] == node[0]
-			ict += 1
-	node[1]["ict"] = ict
-	node[1]["oct"] = oct
-
 outText = JSON.stringify({"edges": edges, "nodes": nodes, "name":b.name, "inrx":b.in, "outtx":b.out, "consts":b.const}, null, 2)
 console.log outText
