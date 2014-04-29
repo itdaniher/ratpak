@@ -9,10 +9,11 @@ use rtlsdr::*;
 use kpn::*;
 use bitfount::*;
 use vidsink2::*;
+use std::comm::{Receiver, Sender, Select, Handle, channel};
 
 static localhost: &'static str = "localhost";
 
-pub fn fork<T: Clone+Send>(u: std::comm::Receiver<T>, v: ~[std::comm::Sender<T>]) {
+pub fn fork<T: Clone+Send>(u: Receiver<T>, v: ~[Sender<T>]) {
 	loop {
 		let x = u.recv();
 		for y in v.iter() {
@@ -21,22 +22,21 @@ pub fn fork<T: Clone+Send>(u: std::comm::Receiver<T>, v: ~[std::comm::Sender<T>]
 	}
 }
 
-pub fn mulAcross<T: Float+Send>(u: ~[std::comm::Receiver<T>], v: std::comm::Sender<T>, C: T) {
+pub fn mulAcross<T: Float+Send>(u: ~[Receiver<T>], v: Sender<T>, c: T) {
 	loop {
-		v.send(u.iter().map(|y| y.recv()).fold(C, |B, A| B*A))
+		v.send(u.iter().map(|y| y.recv()).fold(c, |b, a| b*a))
 	}
 }
 
-pub fn sumAcross<T: Float+Send>(u: ~[std::comm::Receiver<T>], v: std::comm::Sender<T>, C: T) {
+pub fn sumAcross<T: Float+Send>(u: ~[Receiver<T>], v: Sender<T>, c: T) {
 	loop {
-		v.send(u.iter().map(|y| y.recv()).fold(C, |B, A| B+A))
+		v.send(u.iter().map(|y| y.recv()).fold(c, |b, a| b+a))
 	}
 }
 
-pub fn grapes<T: Send>( u: ~[std::comm::Receiver<T>], v: std::comm::Sender<T>) {
-	use std::comm::Select;
+pub fn grapes<T: Send>(u: ~[Receiver<T>], v: Sender<T>) {
 	let sel = Select::new();
-	let mut hs: Vec<std::comm::Handle<T>> = vec!();
+	let mut hs: Vec<Handle<T>> = vec!();
 	for x in u.iter() {
 		let mut h = sel.handle(x);
 		unsafe {
@@ -51,11 +51,23 @@ pub fn grapes<T: Send>( u: ~[std::comm::Receiver<T>], v: std::comm::Sender<T>) {
 	}
 }
 
-pub fn Z<T: Send+Clone>( u: std::comm::Receiver<T>, v: std::comm::Sender<T>) {
+pub fn Z<T: Send+Clone>(u: Receiver<T>, v: Sender<T>) {
 	let x = u.recv();
 	v.send(x.clone());
 	v.send(x.clone());
 	loop {
 		v.send(u.recv());
+	}
+}
+
+pub fn shaper<T: Send+Clone>(u: Receiver<T>, v: Sender<Vec<T>>, l: uint) {
+	loop {
+		v.send(range(0, l).map(|_| u.recv()).collect())
+	}
+}
+
+pub fn binconv(u: Receiver<Vec<uint>>, v: Sender<Vec<uint>>, l: ~[uint]) {
+	loop {
+		v.send(eat(u.recv().slice_from(0), l.clone()))
 	}
 }

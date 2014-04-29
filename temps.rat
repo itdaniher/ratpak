@@ -5,6 +5,8 @@ main
 	^ (discretize) vidSink
 	rle
 	dle 256e3
+	$ 2
+	$ 36
 	printSink
 
 main

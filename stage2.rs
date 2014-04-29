@@ -44,9 +44,11 @@ fn getGraph() -> (Graph, ~[json::Json]) {
 }
 
 fn main () {
+
 	let (y, args) = getGraph();
 	let mut channelStmts: Vec<ast::P<ast::Stmt>> = vec!();
 	let mut spawnExprs: Vec<ast::P<ast::Expr>> = vec!();
+
 	for ((uid, node), arg) in y.nodes.clone().move_iter().zip(args.move_iter()) {
 		let mut rxers: Vec<~str> = vec!();
 		let mut txers: Vec<~str> = vec!();
@@ -68,9 +70,6 @@ fn main () {
 		}
 		let nodepname = node.pname.clone();
 
-		let eps = || {vec!(expr_vec(rxers.iter().map(|x| expr_path(x.slice_from(0))).collect()),
-			expr_vec(txers.iter().map(|x| expr_path(x.slice_from(0))).collect()))};
-
 		let n = if nodepname.slice_from(0) == "*" { "mulAcross".to_str() }
 			else if nodepname.slice_from(0) == "+" {"sumAcross".to_str()}
 			else if nodepname.slice_from(0) == "Z" {"delay".to_str()}
@@ -78,7 +77,7 @@ fn main () {
 			else if nodepname.slice_from(0) == "b" {"binconv".to_str()}
 			else if nodepname.slice_from(0) == "$" {"shaper".to_str()}
 			else if nodepname.slice_from(0) == "?" {"matcher".to_str()}
-			else { nodepname};
+			else { nodepname.clone() };
 
 		let mut argv = match (rxers.len(), txers.len()) {
 			(0, 0) => vec!(),
@@ -91,37 +90,55 @@ fn main () {
 				if y > 1 {
 					let ftx = txers.get(0).slice_to(13).to_str().append("0");
 					let frx = (~"r").append(ftx.slice_from(1));
-					spawnExprs.push(spawn(expr_call(expr_path("fork".to_str()), vec!(expr_path(frx), expr_owned_vec(txers.iter().map(|x| expr_path(x.slice_from(0))).collect())))));
+					spawnExprs.push(spawn(expr_call(expr_path("fork".to_str()), 
+						vec!(expr_path(frx), expr_owned_vec(txers.iter().map(|x| expr_path(x.slice_from(0))).collect())))));
 					channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.clone()), pat_name(frx.clone()))), expr_call(expr_path("std::comm::channel"), vec!())));
 					expr_path(ftx)
 				}
 				else { expr_path(txers.get(0).slice_from(0)) }
 				)}
 			};
+
 		argv.push_all_move(
 			match JSONtoAST(arg.clone()) {
 				Some(lits) => {
 					match lits {
 						ast::ExprVec(v) => v,
 						ast::ExprPath(v) => vec!(expr(ast::ExprPath(v))),
+						ast::ExprVstore(v, _) => vec!(expr(lits)),
 						_ => fail!("{:?}", lits)
 				}}
-				None => vec!()
+				None => {
+					if nodepname.slice_from(0) == "+" {
+						vec!(parse_expr("0"))
+					}
+					else if nodepname.slice_from(0) == "*" {
+						vec!(parse_expr("1"))
+					}
+					else {
+						vec!()
+					}
+				}
 			}
 		);
-		spawnExprs.push(spawn(expr_call(expr_path(n),argv)));
+
+		spawnExprs.push(spawn(expr_call(expr_path(n), argv)));
+
 		txers.iter().map(|txer| {
 			let dstrm = (~"r").append((*txer).slice_from(1));
-			channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(*txer), pat_name(dstrm))), expr_call(expr_path("std::comm::channel"), vec!())))
+			channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(*txer), pat_name(dstrm))), expr_call(expr_path("channel"), vec!())))
 		}).last();
 	}
+
 	channelStmts.push_all_move(spawnExprs.move_iter().map(|x| stmt_semi(x)).collect());
+
 	let function = match y.consts.clone() {
 		Some(fnargs) => fn_item(y.name,
 			fnargs.move_iter().map(|x| {ast::Arg {ty: ty_infer(), pat: pat_name(x.slice_from(0)), id: 0}}).collect(),
 			ty_nil(), block(channelStmts, None)),
 		None => fn_item(y.name, vec!(), ty_nil(), block(channelStmts, None))
 	};
+
 	println!("{}", include_str!("boilerplate.rs"));
 	println!("{}", syntax::print::pprust::item_to_str(&function));
 }

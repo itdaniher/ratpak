@@ -13,7 +13,7 @@ use syntax::parse::token;
 use syntax::abi;
 use syntax::parse::token::intern_and_get_ident;
 
-pub fn path(name: &str) -> ast::Path {
+pub fn path(name: &str, ty: Option<ast::Ty_>) -> ast::Path {
 	ast::Path {
 		span: codemap::DUMMY_SP,
 		global: false,
@@ -22,7 +22,7 @@ pub fn path(name: &str) -> ast::Path {
 				identifier: token::str_to_ident(name),
 				lifetimes: Default::default(),
 				// TODO: some way to change the type allowing this constructor to be used for fndef
-				types: Default::default(),
+				types: match ty { Some(n) => syntax::owned_slice::OwnedSlice::from_vec(vec!(P(ast::Ty { id: 0, node: n, span: codemap::DUMMY_SP }))), None => Default::default()}
 			}
 		),
 	}
@@ -93,7 +93,7 @@ pub fn expr_char(c: char) -> P<ast::Expr> {
 }
 
 pub fn expr_path(p: &str) -> P<ast::Expr> {
-	expr(ast::ExprPath(path(p)))
+	expr(ast::ExprPath(path(p, None)))
 }
 
 pub fn expr_tuple(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
@@ -118,7 +118,7 @@ pub fn pat(p: ast::Pat_) -> P<ast::Pat> {
 
 
 pub fn pat_name(name: &str) -> P<ast::Pat> {
-	pat(ast::PatIdent(ast::BindByValue(ast::MutImmutable), path(name), None))
+	pat(ast::PatIdent(ast::BindByValue(ast::MutImmutable), path(name, None), None))
 }
 
 pub fn pat_tuple(items: Vec<P<ast::Pat>>) -> P<ast::Pat> {
@@ -188,8 +188,9 @@ pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
 	match jsonobj {
 		json::Number(v) if (v - (v as int) as f64).abs() < 10.0*Float::epsilon() => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitIntUnsuffixed(v as i64))))),
 		json::Number(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v))))))),
-		json::String(v) => Some(ast::ExprPath(path(v.slice_from(0)))), //Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitStr(intern_and_get_ident(v.slice_from(0)), ast::CookedStr))))),
+		json::String(v) => Some(ast::ExprPath(path(v.slice_from(0), None))),
 		json::List(l) => Some(ast::ExprVec(l.move_iter().filter_map(|a| {JSONtoAST(a)}).map(|a| expr(a)).collect())),
+		//json::List(l) => Some(ast::ExprVstore(expr_vec(l.move_iter().filter_map(|a| {JSONtoAST(a)}).map(|a| expr(a)).collect()), ast::ExprVstoreUniq)),
 		json::Boolean(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitBool(v))))),
 		json::Null => None,
 		_ => None
