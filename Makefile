@@ -4,10 +4,10 @@ stage2.json:
 	coffee stage1.coffee 0 > stage2.json
 
 libabstrast.so:
-	rustc -O --crate-type=dylib abstrast.rs
+	rustc --crate-type=dylib abstrast.rs
 
-stage2: libabstrast*.so
-	rustc -O -L./ stage2.rs
+stage2: libabstrast.so
+	rustc -L./ stage2.rs
 
 stage3.rs: stage2 stage2.json
 	./stage2 > stage3.rs

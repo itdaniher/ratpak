@@ -49,6 +49,12 @@ pub fn sumAcross<T: Float+Send>(u: ~[Receiver<T>], v: Sender<T>, c: T) {
 	}
 }
 
+pub fn sumAcrossVecs<T: Float+Send>(u: ~[Receiver<Vec<T>>], v: Sender<Vec<T>>, c: Vec<T>) {
+	loop {
+		v.send(u.iter().map(|y| y.recv()).fold(c.clone(), |b, a| a.iter().zip(b.iter()).map(|(&d, &e)| d+e).collect()))
+	}
+}
+
 pub fn grapes<T: Send>(u: ~[Receiver<T>], v: Sender<T>) {
 	let sel = Select::new();
 	let mut hs: Vec<Handle<T>> = vec!();
@@ -66,10 +72,8 @@ pub fn grapes<T: Send>(u: ~[Receiver<T>], v: Sender<T>) {
 	}
 }
 
-pub fn Z<T: Send+Clone>(u: Receiver<T>, v: Sender<T>) {
-	let x = u.recv();
-	v.send(x.clone());
-	v.send(x.clone());
+pub fn delay<T: Send+Clone>(u: Receiver<T>, v: Sender<T>, c: T) {
+	v.send(c);
 	loop {
 		v.send(u.recv());
 	}

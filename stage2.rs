@@ -65,9 +65,10 @@ fn main () {
 		}
 		let nodepname = node.pname;
 
-		let n = if nodepname.slice_from(0) == "*." { "mulAcrossVecs".to_str() }
+		let n = if nodepname.slice_from(0) == ".*" { "mulAcrossVecs".to_str() }
 			else if nodepname.slice_from(0) == "*" { "mulAcross".to_str() }
 			else if nodepname.slice_from(0) == "+" {"sumAcross".to_str()}
+			else if nodepname.slice_from(0) == ".+" {"sumAcrossVecs".to_str()}
 			else if nodepname.slice_from(0) == "Z" {"delay".to_str()}
 			else if nodepname.slice_from(0) == "%" {"grapes".to_str()}
 			else if nodepname.slice_from(0) == "b" {"binconv".to_str()}
@@ -108,6 +109,15 @@ fn main () {
 					}
 					else if nodepname.slice_from(0) == "*" {
 						vec!(parse_expr("1"))
+					}
+					else if nodepname.slice_from(0) == ".*" {
+						vec!(parse_expr("range(0,512).map(|_| 1.0).collect()"))
+					}
+					else if nodepname.slice_from(0) == ".+" {
+						vec!(parse_expr("range(0,512).map(|_| 0.0).collect()"))
+					}
+					else if nodepname.slice_from(0) == "Z" {
+						vec!(parse_expr("range(0,512).map(|_| 0.0).collect()"))
 					}
 					else {
 						vec!()

@@ -2,12 +2,12 @@ main
 	rtlSourceCmplx 434e6, 402, 256e3
 	^ (normify) (FFT 512, 0)
 	(trigger) (normify)
-	(discretize) vidSink
-	rle
-	dle 256e3
-	validTokenA
-	$36
-	(b [14,2,12,8])
+	(discretize) .+.2 .3
+	rle ^ Z vidSink
+	dle 256e3 ^ .+.-2 .*'range(0, 512).map(|_|-1e-4).collect()'
+	validTokenA .+.-3
+	$ 36
+	b [14,2,12,8]
 	printSink
 
 main
