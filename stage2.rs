@@ -133,6 +133,6 @@ fn main () {
 		None => fn_item(y.name, vec!(), ty_nil(), block(channelStmts, None))
 	};
 
-	println!("{}", include_str!("boilerplate.rs"));
+	println!("{}", File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap());
 	println!("{}", syntax::print::pprust::item_to_str(&function));
 }

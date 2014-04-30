@@ -5,8 +5,9 @@ main
 	(discretize) vidSink
 	rle
 	dle 256e3
-	$2
+	validTokenA
 	$36
+	(b [14,2,12,8])
 	printSink
 
 main
@@ -19,7 +20,7 @@ main
 	^ $2 mandec(5e-5) printSink
 	(? (((1,5e-4), (0,2e-3)), ((1,5e-4), (0,4e-3)))) "
 	$36 $195
-	(b [14,2,12,8]) (b [15,6,5,8,2,9,1,4,2,9,4])
+	(b [15,6,5,8,2,9,1,4,2,9,4])
 	%
 	(^ udpTokenSink ('localhost',9999) printSink)
 

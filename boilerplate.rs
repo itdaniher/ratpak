@@ -8,6 +8,7 @@ extern crate kissfft;
 extern crate num;
 extern crate dsputils;
 
+use native::task;
 use num::complex;
 use kissfft::FFT;
 use rtlsdr::*;
