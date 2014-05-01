@@ -26,6 +26,43 @@ struct Graph {
 	outtx: bool,
 }
 
+fn expandPrim(nodepname: ~str) -> ~str {
+	match nodepname.len() {
+		1 => match nodepname.char_at(0) {
+				'*' => "mulAcross",
+				'+' => "sumAcross",
+				'Z' => "delay",
+				'%' => "grapes",
+				'b' => "binconv",
+				'$' => "shaper",
+				'?' => "matcher",
+				 _  => nodepname.as_slice(),
+			}.to_owned(),
+		2 => match (nodepname.char_at(0), nodepname.char_at(1)) {
+			('.', x)  => expandPrim(std::str::from_char(x)).append("Vecs"),
+			 _  => nodepname
+		},
+		_ => nodepname
+	}
+}
+
+fn getDefaultArgs(nodepname: ~str) -> ~str {
+	let x = match nodepname.len() {
+		1 => match nodepname.char_at(0) {
+			'*' => ~"1",
+			'+' | 'Z' => ~"0",
+			_ => ~"",
+		},
+		2 => match (nodepname.char_at(0), nodepname.char_at(1)) {
+			('.', x) => "range(0,512).map(|_| ".to_owned().append(getDefaultArgs(std::str::from_char(x))).append(").collect()"),
+			_ => ~""
+		},
+		_ => ~""
+	};
+	println!("{:?}", x);
+	x
+}
+
 fn getGraph() -> (Graph, ~[json::Json]) {
 	let json_str_to_decode = File::open(&Path::new("./stage2.json")).read_to_str().unwrap();
 	let json_object = json::from_str(json_str_to_decode.to_owned()).unwrap();
@@ -63,18 +100,7 @@ fn main () {
 			else {
 			}
 		}
-		let nodepname = node.pname;
-
-		let n = if nodepname.slice_from(0) == ".*" { "mulAcrossVecs".to_str() }
-			else if nodepname.slice_from(0) == "*" { "mulAcross".to_str() }
-			else if nodepname.slice_from(0) == "+" {"sumAcross".to_str()}
-			else if nodepname.slice_from(0) == ".+" {"sumAcrossVecs".to_str()}
-			else if nodepname.slice_from(0) == "Z" {"delay".to_str()}
-			else if nodepname.slice_from(0) == "%" {"grapes".to_str()}
-			else if nodepname.slice_from(0) == "b" {"binconv".to_str()}
-			else if nodepname.slice_from(0) == "$" {"shaper".to_str()}
-			else if nodepname.slice_from(0) == "?" {"matcher".to_str()}
-			else { nodepname.clone() };
+		let n = expandPrim(node.pname.clone());
 		let mut argv = vec!();
 		match rxers.len() {
 			0 => (),
@@ -104,23 +130,9 @@ fn main () {
 						_ => fail!("{:?}", lits)
 				}}
 				None => {
-					if nodepname.slice_from(0) == "+" {
-						vec!(parse_expr("0"))
-					}
-					else if nodepname.slice_from(0) == "*" {
-						vec!(parse_expr("1"))
-					}
-					else if nodepname.slice_from(0) == ".*" {
-						vec!(parse_expr("range(0,512).map(|_| 1.0).collect()"))
-					}
-					else if nodepname.slice_from(0) == ".+" {
-						vec!(parse_expr("range(0,512).map(|_| 0.0).collect()"))
-					}
-					else if nodepname.slice_from(0) == "Z" {
-						vec!(parse_expr("range(0,512).map(|_| 0.0).collect()"))
-					}
-					else {
-						vec!()
+					match getDefaultArgs(node.pname.clone()).slice_from(0) {
+						"" => vec!(),
+						x => vec!(parse_expr(x))
 					}
 				}
 			}
