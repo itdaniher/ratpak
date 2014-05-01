@@ -54,7 +54,8 @@ fn getDefaultArgs(nodepname: ~str) -> ~str {
 			_ => ~"",
 		},
 		2 => match (nodepname.char_at(0), nodepname.char_at(1)) {
-			('.', x) => "range(0,512).map(|_| ".to_owned().append(getDefaultArgs(std::str::from_char(x))).append(").collect()"),
+			('.', x) => "range(0,512).map(|_| ".to_owned()
+				.append(getDefaultArgs(std::str::from_char(x))).append(").collect()"),
 			_ => ~""
 		},
 		_ => ~""
@@ -67,7 +68,8 @@ fn getGraph() -> (Graph, ~[json::Json]) {
 	let json_str_to_decode = File::open(&Path::new("./stage2.json")).read_to_str().unwrap();
 	let json_object = json::from_str(json_str_to_decode.to_owned()).unwrap();
 	let mut decoder = json::Decoder::new(json_object.clone());
-	let args: ~[json::Json] = json_object.search(&~"nodes").unwrap().as_list().unwrap().iter().map(|x| {x.as_list().unwrap()[1].find(&~"args").unwrap().clone()}).collect();
+	let args: ~[json::Json] = json_object.search(&~"nodes").unwrap().as_list().unwrap().iter()
+		.map(|x| {x.as_list().unwrap()[1].find(&~"args").unwrap().clone()}).collect();
 	let y: Graph = match Decodable::decode(&mut decoder) {
         Ok(v) => v,
 		Err(e) => fail!("Decoding error: {}", e)
@@ -114,8 +116,10 @@ fn main () {
 					let ftx = txers.get(0).slice_to(13).to_str().append("0");
 					let frx = (~"r").append(ftx.slice_from(1));
 					spawnExprs.push(spawn(expr_call(expr_path("fork".to_str()),
-						vec!(expr_path(frx), expr_owned_vec(txers.iter().map(|x| expr_path(x.slice_from(0))).collect())))));
-					channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.clone()), pat_name(frx.clone()))), expr_call(expr_path("channel"), vec!())));
+						vec!(expr_path(frx), expr_owned_vec(txers.iter().map(
+							|x| expr_path(x.slice_from(0))).collect())))));
+					channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.clone()),
+						pat_name(frx.clone()))), expr_call(expr_path("channel"), vec!())));
 					argv.push(expr_path(ftx))
 				}
 			};
@@ -142,7 +146,8 @@ fn main () {
 
 		txers.iter().map(|txer| {
 			let dstrm = (~"r").append((*txer).slice_from(1));
-			channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(*txer), pat_name(dstrm))), expr_call(expr_path("channel"), vec!())))
+			channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(*txer), 
+				pat_name(dstrm))), expr_call(expr_path("channel"), vec!())))
 		}).last();
 	}
 
