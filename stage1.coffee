@@ -10,55 +10,34 @@ p = PEG.buildParser grammar, plugins: [coffee]
 v = _.compact p.parse source
 i = if process.argv.length > 2 then parseInt(process.argv[2]) else 0
 b = v[i]
+
 uidgen = (a) ->
-	("00"+a.pos.y).slice(-3) + ("00"+a.pos.x).slice(-3)
+	("00"+a.y).slice(-3) + ("00"+a.x).slice(-3)
 
-nodes = []
+exprs = _.flatten(b["lines"])
 
-if b.in
-	b["lines"].unshift([{"proc": "in", "pos":{"x":0, "y":0}}])
+nodes = exprs.map (p) ->
+	label = if p.args.length == 0 then p.proc else p.proc + "(" + (JSON.stringify p.args) + ")"
+	[uidgen(p), {pname: p.proc, label: label, args:p.args}]
 
-_.flatten(b["lines"]).map (p) ->
-	if p.refs == undefined or p.refs[0] >= 0
-		if p.proc != "\""
-			label = if (p.args) == undefined then p.proc else p.proc + "(" + (JSON.stringify p.args) + ")"
-			if p.args == undefined
-				p.args = null
-			nodes.push [uidgen(p), {pname: p.proc, label: label, args:p.args}]
+getEdgesTo = (n, g) ->
+	out = []
+	if n.y != 1 and n.refs[0] == undefined
+		out.push([uidgen(_.findWhere(g, {"x": n.x-(n.modif=="^"), "y": n.y-1})), uidgen(n)])
+	n.refs.forEach (r) ->
+		if n.refs[0] < 0
+			out.push([uidgen(_.findWhere(g, {"x": n.x-(n.modif=="^"), "y": n.y-1})), uidgen(g.filter((x)-> x.refs.filter((y) -> y==-r).length)[0])])
+		else
+			out.push([(uidgen(g.filter((z) -> (z["x"] == (n.x-(n.modif=="^"))) && (z["y"] == n.y-1))[0])), uidgen(n)])
+	out[0]
 
-edges = []
+edges = [getEdgesTo d, exprs for d in exprs][0].filter((x) -> x?)
 
-b["lines"].forEach (e, i, l) ->
-	e.forEach (ee, ii, ll) ->
-		if i != 0 and ee.proc != "\""
-			ai = ii
-			ai -= ll.slice(1, ii+1).filter((p) -> p.modif == "^").length # drop forked procs from the running
-			ai += l[i-1].slice(0, ii+1).filter((p) -> if p.refs then p.refs[0] < 0 else false).length # drop refs on last line
-			if ee.proc == "%" or ee.modif == "/"
-				[ai..l[i-1].length-1].forEach (x) ->
-					upper = l[i-1][x]
-					if upper.proc == "\""
-						x -= l[i-1].slice(1, x+1).filter((p) -> p.modif == "^").length
-						upper = l[i-2][x]
-					edges.push [uidgen(upper), uidgen(ee)]
-			else
-				upper = l[i-1][ai]
-				if upper.proc == "\""
-					ai -= l[i-1].slice(1, ai+1).filter((p) -> p.modif == "^").length
-					upper = l[i-2][ai]
-					if upper.proc == "\""
-						ai -= l[i-2].slice(1, ai+1).filter((p) -> p.modif == "^").length
-						upper = l[i-3][ai]
-				if ee.refs == undefined or ee.refs.filter((p) -> p > 0).length
-					edges.push [uidgen(upper), uidgen(ee)]
-				else if ee.refs.filter((p) -> p < 0).length
-					ee.refs.forEach (eee) ->
-						back = (p for p in l[i+eee] when p.refs and -1*eee in p.refs)[0]
-						edges.push [uidgen(upper), uidgen(back)]#, {label: eee}]
+dropMe = nodes.filter((x) -> x[1].pname == "\"").filter((x) -> x?).map((x) -> x[0])
+edges = edges.filter((y) -> ((dropMe.lastIndexOf(y[0]) < 0) and (dropMe.lastIndexOf(y[1]) < 0)))
 
-if b.out
-	nodes.push ["999999", {"label": "out", "pname": "out", "args": null}]
-	edges.push [edges[edges.length-1][1], "999999"]
+nodes = nodes.filter((x) -> x[1].pname != "\"")
+nodes = nodes.filter((x) -> _.flatten(edges).lastIndexOf(x[0]) > -1)
 
 outText = JSON.stringify({"edges": edges, "nodes": nodes, "name":b.name, "inrx":b.in, "outtx":b.out, "consts":b.const}, null, 2)
 console.log outText

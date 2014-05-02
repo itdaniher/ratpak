@@ -17,7 +17,7 @@ argless =
 
 name =
 	$("." name)
-	/ [,*+?%><&!]
+	/ [,*+?%><&!$]
 	/ aname
 
 aname =
@@ -60,10 +60,10 @@ modif =
 
 proc =
 	" "? "(" " "? p:proc " "? ")" " "? {p}
-	/ n: argless { @row += 1;{"proc": n, "pos":{"y":line() - @start, "x":@row} }}
-	/ n: name r: ref+ { @row += 1;{"proc":n, "refs": r, "pos":{"y":line() - @start, "x":@row}} }
-	/ n: name a: args { @row += 1;{"proc": n, "args": a, "pos":{"y":line() - @start, "x":@row}} }
-	/ n: name { @row += 1;{"proc": n, "pos":{"y":line() - @start, "x":@row} }}
+	/ n: argless { @row += 1;{"proc": n, "y":line() - @start, "x":@row, "refs":[], "args": []}}
+	/ n: name r: ref+ { @row += 1;{"proc":n, "refs": r, "y":line() - @start, "x":@row, "args": []} }
+	/ n: name a: args { @row += 1;{"proc": n, "args": a, "y":line() - @start, "x":@row, "refs":[]} }
+	/ n: name { @row += 1;{"proc": n, "y":line() - @start, "x":@row, "refs":[],args:[] }}
 
 expr =
 	" "? "(" " "? e:expr " "? ")" " "? {e}

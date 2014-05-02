@@ -5,6 +5,39 @@ main
 	(discretize) .+.2 .3
 	rle ^ (.Z) vidSink
 	dle 256e3 ^ .+.-2 .* 'vec([-5e-4f32,..512])'
+	validTokenA " .+.-3
+	$ 36
+	b [14,2,12,8]
+	.uintTof32
+	.* 'vec([1f32, 1.0, 0.1, 1.0])'
+	printSink
+
+main
+	rtlSourceCmplx 434e6, 402, 256e3
+	^ (normify) (FFT 512, 0)
+	(trigger) (normify)
+	vidSink .+.2 .3
+	^ (.Z) "
+	(^ .+.-2 .* 'vec([-5e-4f32,..512])')
+	.+.-3 "
+
+main
+	rtlSourceCmplx 434e6, 402, 256e3
+	^ (normify) (FFT 512, 0)
+	(trigger) (normify)
+	" .+.2 .3
+	" (^ (.Z) ")
+	" (^ .+.-2 .* 'vec([-5e-4f32,..512])') "
+	" .+.-3 "
+	/manyVidSink
+
+main
+	rtlSourceCmplx 434e6, 402, 256e3
+	^ (normify) (FFT 512, 0)
+	(trigger) (normify)
+	(discretize) .+.2 .3
+	rle ^ (.Z) vidSink
+	dle 256e3 ^ .+.-2 .* 'vec([-5e-4f32,..512])'
 	validTokenA .+.-3
 	$ 36
 	b [14,2,12,8]

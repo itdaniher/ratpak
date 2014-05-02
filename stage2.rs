@@ -115,16 +115,16 @@ fn main () {
 			match JSONtoAST(arg.clone()) {
 				Some(lits) => {
 					match lits {
-						ast::ExprVec(v) => v,
+						ast::ExprVec(v) => if v.len() > 0 {v} else {
+							match getDefaultArgs(node.pname.clone()).slice_from(0) {
+								"" => vec!(),
+								x => vec!(parse_expr(x))
+							}
+						},
 						ast::ExprPath(_) | ast::ExprVstore(_, _) => vec!(expr(lits)),
 						_ => fail!("{:?}", lits)
 				}}
-				None => {
-					match getDefaultArgs(node.pname.clone()).slice_from(0) {
-						"" => vec!(),
-						x => vec!(parse_expr(x))
-					}
-				}
+				None => vec!()
 			}
 		);
 
