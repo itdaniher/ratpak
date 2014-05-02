@@ -22,13 +22,15 @@ nodes = exprs.map (p) ->
 
 getEdgesTo = (n, g) ->
 	out = []
-	if n.y != 1 and n.refs[0] == undefined
-		out.push([uidgen(_.findWhere(g, {"x": n.x-(n.modif=="^"), "y": n.y-1})), uidgen(n)])
+	ny = n.y-1
+	nx = n.x-(n.modif=="^")
+	if ny != 0 and n.refs[0] == undefined
+		out.push([uidgen(_.findWhere(g, {"x": nx, "y": ny})), uidgen(n)])
 	n.refs.forEach (r) ->
 		if n.refs[0] < 0
-			out.push([uidgen(_.findWhere(g, {"x": n.x-(n.modif=="^"), "y": n.y-1})), uidgen(g.filter((x)-> x.refs.filter((y) -> y==-r).length)[0])])
+			out.push([uidgen(_.findWhere(g, {"x": nx, "y": ny})), uidgen(g.filter((x)-> x.refs.filter((y) -> y==-r).length)[0])])
 		else
-			out.push([(uidgen(g.filter((z) -> (z["x"] == (n.x-(n.modif=="^"))) && (z["y"] == n.y-1))[0])), uidgen(n)])
+			out.push([(uidgen(g.filter((z) -> (z["x"] == nx) && (z["y"] == ny))[0])), uidgen(n)])
 	out[0]
 
 edges = [getEdgesTo d, exprs for d in exprs][0].filter((x) -> x?)
