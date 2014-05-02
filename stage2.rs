@@ -35,7 +35,7 @@ fn expandPrim(nodepname: ~str) -> ~str {
 		'b' => ~"binconv",
 		'$' => ~"shaper",
 		'?' => ~"matcher",
-		'/' => ~"applicator",
+		'!' => ~"applicator",
 		'.' => expandPrim(nodepname.slice_from(1).to_owned()).append("Vecs"),
 		 _  => nodepname
 	}
