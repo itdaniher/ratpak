@@ -17,10 +17,37 @@ use bitfount::*;
 use vidsink2::*;
 use std::comm::{Receiver, Sender, Select, Handle, channel};
 use std::num;
-
-static localhost: &'static str = "localhost";
+use std::vec;
 
 pub fn asRe<T: Float> ( d: Vec<T> ) -> Vec<complex::Cmplx<T>> { d.iter().map(|&x| {complex::Cmplx {re: x, im: num::zero()}}).collect() }
+
+pub fn applicator<T: Clone+Send>(u: Receiver<T>, v: Sender<T>, f: fn(T)->T) {
+	loop {
+		v.send(f(u.recv()))
+	}
+}
+
+pub fn applicatorVecs<T: Clone+Send>(u: Receiver<Vec<T>>, v: Sender<Vec<T>>, f: |&T|->T) {
+	loop {
+		v.send(u.recv().iter().map(|x|f(x)).collect())
+	}
+}
+
+pub fn uintTof32Vecs(u: Receiver<Vec<uint>>, v: Sender<Vec<f32>>) {
+	loop {
+		v.send(u.recv().iter().map(|&x| x as f32).collect())
+	}
+}
+
+pub fn uintTof32(u: Receiver<uint>, v: Sender<f32>) {
+	loop {
+		v.send(u.recv() as f32)
+	}
+}
+
+pub fn vec<T: Clone>(u: &[T]) -> Vec<T> {
+	vec::Vec::from_slice(u)
+}
 
 pub fn fork<T: Clone+Send>(u: Receiver<T>, v: ~[Sender<T>]) {
 	loop {
@@ -79,9 +106,21 @@ pub fn delay<T: Send+Clone>(u: Receiver<T>, v: Sender<T>, c: T) {
 	}
 }
 
-pub fn shaper<T: Send+Clone>(u: Receiver<T>, v: Sender<Vec<T>>, l: uint) {
+pub fn delayVecs<T: Send+Clone>(u: Receiver<T>, v: Sender<T>, c: T) {
+	delay(u, v, c);
+}
+
+pub fn shaper<T: Send+Clone>(u: Receiver<Option<T>>, v: Sender<Vec<T>>, l: uint) {
+	let mut x = vec!();
 	loop {
-		v.send(range(0, l).map(|_| u.recv()).collect())
+		match u.recv() {
+			Some(y) => x.push(y),
+			None => x = vec!(),
+		}
+		if x.len() == l {
+			v.send(x.clone());
+			x = vec!();
+		}
 	}
 }
 

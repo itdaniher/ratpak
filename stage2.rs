@@ -6,7 +6,6 @@ extern crate abstrast;
 
 use std::io::File;
 use std::path::Path;
-use std::strbuf::StrBuf;
 use abstrast::*;
 use syntax::ast;
 use serialize::{json, Encodable, Decodable};
@@ -16,6 +15,7 @@ struct Node {
 	pname: ~str
 }
 
+// naive graph format
 #[deriving(Decodable,Encodable)]
 struct Graph {
 	edges: Vec<Vec<~str>>,
@@ -27,30 +27,25 @@ struct Graph {
 }
 
 fn expandPrim(nodepname: ~str) -> ~str {
-	match nodepname.len() {
-		1 => match nodepname.char_at(0) {
-				'*' => "mulAcross",
-				'+' => "sumAcross",
-				'Z' => "delay",
-				'%' => "grapes",
-				'b' => "binconv",
-				'$' => "shaper",
-				'?' => "matcher",
-				 _  => nodepname.as_slice(),
-			}.to_owned(),
-		2 => match (nodepname.char_at(0), nodepname.char_at(1)) {
-			('.', x)  => expandPrim(std::str::from_char(x)).append("Vecs"),
-			 _  => nodepname
-		},
-		_ => nodepname
+	match nodepname.char_at(0) {
+		'*' => ~"mulAcross",
+		'+' => ~"sumAcross",
+		'Z' => ~"delay",
+		'%' => ~"grapes",
+		'b' => ~"binconv",
+		'$' => ~"shaper",
+		'?' => ~"matcher",
+		'/' => ~"applicator",
+		'.' => expandPrim(nodepname.slice_from(1).to_owned()).append("Vecs"),
+		 _  => nodepname
 	}
 }
 
 fn getDefaultArgs(nodepname: ~str) -> ~str {
-	let x = match nodepname.len() {
+	match nodepname.len() {
 		1 => match nodepname.char_at(0) {
-			'*' => ~"1",
-			'+' | 'Z' => ~"0",
+			'*' => ~"1.0",
+			'+' | 'Z' => ~"0.0",
 			_ => ~"",
 		},
 		2 => match (nodepname.char_at(0), nodepname.char_at(1)) {
@@ -59,15 +54,15 @@ fn getDefaultArgs(nodepname: ~str) -> ~str {
 			_ => ~""
 		},
 		_ => ~""
-	};
-	println!("{:?}", x);
-	x
+	}
 }
 
 fn getGraph() -> (Graph, ~[json::Json]) {
+	// get json graph and node arguments from stage2.json
 	let json_str_to_decode = File::open(&Path::new("./stage2.json")).read_to_str().unwrap();
 	let json_object = json::from_str(json_str_to_decode.to_owned()).unwrap();
 	let mut decoder = json::Decoder::new(json_object.clone());
+	// extract enum-guarded arguments from json, do not deguard
 	let args: ~[json::Json] = json_object.search(&~"nodes").unwrap().as_list().unwrap().iter()
 		.map(|x| {x.as_list().unwrap()[1].find(&~"args").unwrap().clone()}).collect();
 	let y: Graph = match Decodable::decode(&mut decoder) {
@@ -82,24 +77,16 @@ fn main () {
 	let (y, args) = getGraph();
 	let mut channelStmts: Vec<ast::P<ast::Stmt>> = vec!();
 	let mut spawnExprs: Vec<ast::P<ast::Expr>> = vec!();
-
+	// this does the work - iterate over nodes and arguments
 	for ((uid, node), arg) in y.nodes.clone().move_iter().zip(args.move_iter()) {
 		let mut rxers: Vec<~str> = vec!();
 		let mut txers: Vec<~str> = vec!();
 		for edge in y.edges.iter() {
 			if &uid == edge.get(0) {
-				let mut e = StrBuf::from_str("tx");
-				e.push_str(edge.get(0).clone());
-				e.push_str(edge.get(1).clone());
-				txers.push(e.into_owned());
+				txers.push("tx".to_owned().append(edge.get(0).slice_from(0)).append(edge.get(1).slice_from(0)));
 			}
 			else if &uid == edge.get(1) {
-				let mut e = StrBuf::from_str("rx");
-				e.push_str(edge.get(0).clone());
-				e.push_str(edge.get(1).clone());
-				rxers.push(e.into_owned());
-			}
-			else {
+				rxers.push("rx".to_owned().append(edge.get(0).slice_from(0)).append(edge.get(1).slice_from(0)));
 			}
 		}
 		let n = expandPrim(node.pname.clone());
@@ -129,8 +116,7 @@ fn main () {
 				Some(lits) => {
 					match lits {
 						ast::ExprVec(v) => v,
-						ast::ExprPath(v) => vec!(expr(ast::ExprPath(v))),
-						ast::ExprVstore(v, _) => vec!(expr(lits)),
+						ast::ExprPath(_) | ast::ExprVstore(_, _) => vec!(expr(lits)),
 						_ => fail!("{:?}", lits)
 				}}
 				None => {
@@ -146,7 +132,7 @@ fn main () {
 
 		txers.iter().map(|txer| {
 			let dstrm = (~"r").append((*txer).slice_from(1));
-			channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(*txer), 
+			channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(*txer),
 				pat_name(dstrm))), expr_call(expr_path("channel"), vec!())))
 		}).last();
 	}

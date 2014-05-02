@@ -1,15 +1,14 @@
-all: stage3
-
-stage2.json:
-	coffee stage1.coffee 0 > stage2.json
+all: stage3.rs
 
 libabstrast.so:
 	rustc --crate-type=dylib abstrast.rs
 
-stage2: libabstrast.so
+stage2: libabstrast*.so
 	rustc -L./ stage2.rs
 
-stage3.rs: stage2 stage2.json
+stage3.rs: stage2
+	rm -f stage2.json
+	coffee stage1.coffee 0 > stage2.json
 	./stage2 > stage3.rs
 
 stage3: stage3.rs
