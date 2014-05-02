@@ -35,8 +35,6 @@ edges = [getEdgesTo d, exprs for d in exprs][0].filter((x) -> x?)
 
 dropMe = nodes.filter((x) -> x[1].pname == "\"").filter((x) -> x?).map((x) -> x[0])
 edges = edges.filter((y) -> ((dropMe.lastIndexOf(y[0]) < 0) and (dropMe.lastIndexOf(y[1]) < 0)))
-
-nodes = nodes.filter((x) -> x[1].pname != "\"")
 nodes = nodes.filter((x) -> _.flatten(edges).lastIndexOf(x[0]) > -1)
 
 outText = JSON.stringify({"edges": edges, "nodes": nodes, "name":b.name, "inrx":b.in, "outtx":b.out, "consts":b.const}, null, 2)
