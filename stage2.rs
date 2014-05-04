@@ -47,6 +47,7 @@ fn getDefaultArgs(nodepname: ~str) -> ~str {
 		1 => match nodepname.char_at(0) {
 			'*' => ~"1.0",
 			'+' | 'Z' => ~"0.0",
+			'?' => ~"|a, b| {a.map(|x| {match x {Some(y) => b.send(y), None => ()}}).last();()}",
 			_ => ~"",
 		},
 		2 => match (nodepname.char_at(0), nodepname.char_at(1)) {
