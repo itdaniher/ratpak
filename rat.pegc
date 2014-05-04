@@ -11,9 +11,7 @@ proto =
 	p: name {@start = line(); p}
 
 argless =
-	"Z"
-	/ "%"
-	/ "\""
+	[%\"]
 
 name =
 	$("." name)
