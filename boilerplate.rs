@@ -15,33 +15,33 @@ use rtlsdr::*;
 use kpn::*;
 use bitfount::*;
 use vidsink2::*;
-use std::comm::{Receiver, Sender, Select, Handle, channel};
+use std::comm::{Receiver, Sender, channel};
 use std::num;
 use std::vec;
 
 pub fn asRe<T: Float> ( d: Vec<T> ) -> Vec<complex::Cmplx<T>> { d.iter().map(|&x| {complex::Cmplx {re: x, im: num::zero()}}).collect() }
 
-pub fn applicator<T: Clone+Send>(u: Receiver<T>, v: Sender<T>, f: fn(T)->T) {
+pub fn applicator<T: Clone+Send>(u: Receiver<T>, v: Sender<T>, f: |T|->T) {
 	loop {
 		v.send(f(u.recv()))
+	}
+}
+
+pub fn crossApplicator<T: Clone+Send, U: Clone+Send>(u: Receiver<T>, v: Sender<U>, f: |T|->U) {
+	loop {
+		v.send(f(u.recv()))
+	}
+}
+
+pub fn crossApplicatorVecs<T: Clone+Send, U: Clone+Send>(u: Receiver<Vec<T>>, v: Sender<Vec<U>>, f: |&T|->U) {
+	loop {
+		v.send(u.recv().iter().map(|x|f(x)).collect())
 	}
 }
 
 pub fn applicatorVecs<T: Clone+Send>(u: Receiver<Vec<T>>, v: Sender<Vec<T>>, f: |&T|->T) {
 	loop {
 		v.send(u.recv().iter().map(|x|f(x)).collect())
-	}
-}
-
-pub fn uintTof32Vecs(u: Receiver<Vec<uint>>, v: Sender<Vec<f32>>) {
-	loop {
-		v.send(u.recv().iter().map(|&x| x as f32).collect())
-	}
-}
-
-pub fn uintTof32(u: Receiver<uint>, v: Sender<f32>) {
-	loop {
-		v.send(u.recv() as f32)
 	}
 }
 
@@ -83,19 +83,13 @@ pub fn sumAcrossVecs<T: Float+Send>(u: ~[Receiver<Vec<T>>], v: Sender<Vec<T>>, c
 }
 
 pub fn grapes<T: Send>(u: ~[Receiver<T>], v: Sender<T>) {
-	let sel = Select::new();
-	let mut hs: Vec<Handle<T>> = vec!();
-	for x in u.iter() {
-		let mut h = sel.handle(x);
-		unsafe {
-			h.add();
-		}
-		hs.push(h);
-	};
-	let hids: ~[uint] = hs.iter().map(|x| x.id()).collect();
 	loop {
-		let y = sel.wait();
-		v.send(u[hids.iter().enumerate().filter_map(|(a, &b)| if b == y { Some(a) } else { None }).next().unwrap()].recv());
+		for x in u.iter() {
+			match x.try_recv() {
+				Ok(d) => v.send(d),
+				Err(_) => ()
+			}
+		}
 	}
 }
 
@@ -115,11 +109,8 @@ pub fn shaper<T: Send+Clone>(u: Receiver<Option<T>>, v: Sender<Vec<T>>, l: uint)
 	loop {
 		match u.recv() {
 			Some(y) => x.push(y),
-			None => x = vec!(),
-		}
-		if x.len() == l {
-			v.send(x.clone());
-			x = vec!();
+			None if x.len() == l => {v.send(x.clone()); x = vec!();},
+			None => {x = vec!();},
 		}
 	}
 }
