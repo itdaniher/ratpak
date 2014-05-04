@@ -1,48 +1,18 @@
 main
-	rtlSourceCmplx 434e6, 402, 256e3
-	^ (normify) (FFT 512, 0)
-	(trigger) (normify)
-	(discretize) .+.2 .3
+	rtlSourceCmplx 4339e5, 200, 256e3
+	^ (.&'|x|{x.norm().abs()}') (FFT 512, 0)
+	(trigger) (.&'|x|{x.norm().abs()}')
+	(discretize) (^ .+.2 .3)
 	rle ^ (.Z) vidSink
 	dle 256e3 ^ .+.-2 .* 'vec([-5e-4f32,..512])'
-	validTokenA " .+.-3
+	?'|mut a,b| {a.map(|x| {match x { Dur(1, 2e-4..6e-4) => match a.next() { Some(Dur(0, 1.5e-3..2.5e-3)) => b.send(Some(0u)), Some(Dur(0, 3.5e-3..4.5e-3)) => b.send(Some(1u)), _ => b.send(None)}, _ => b.send(None)}}).last();()}' " .+.-3
 	$ 36
-	b [14,2,12,8]
-	.uintTof32
-	.* 'vec([1f32, 1.0, 0.1, 1.0])'
-	printSink
-
-main
-	rtlSourceCmplx 434e6, 402, 256e3
-	^ (normify) (FFT 512, 0)
-	(trigger) (normify)
-	vidSink .+.2 .3
-	^ (.Z) "
-	(^ .+.-2 .* 'vec([-5e-4f32,..512])')
-	.+.-3 "
-
-main
-	rtlSourceCmplx 434e6, 402, 256e3
-	^ (normify) (FFT 512, 0)
-	(trigger) (normify)
-	" .+.2 .3
-	" (^ (.Z) ")
-	" (^ .+.-2 .* 'vec([-5e-4f32,..512])') "
-	" .+.-3 "
-	/manyVidSink
-
-main
-	rtlSourceCmplx 434e6, 402, 256e3
-	^ (normify) (FFT 512, 0)
-	(trigger) (normify)
-	(discretize) .+.2 .3
-	rle ^ (.Z) vidSink
-	dle 256e3 ^ .+.-2 .* 'vec([-5e-4f32,..512])'
-	validTokenA .+.-3
-	$ 36
-	b [14,2,12,8]
-	.uintTof32
-	.* 'vec([1f32, 1.0, 0.1, 1.0])'
+	(^ b[4,8,4,12,8] b[4,8,2,10,12])
+	(&'|x| {if *x.get(0) == 5 {Some(x)} else {None}}') (&'|x| {if *x.get(0) != 5 {Some(x)} else {None}}')
+	? ?
+	.&'|&x| {x as f32}' .&'|&x| {x as f32}'
+	.* 'vec!(1., 1., 1., 1e-1, 1.)' .* 'vec!(1., 1., 1., 1e-1, 1e-1)'
+	%
 	printSink
 
 => biquaddf1 (a0, a1, a2, b0, b1, b2) =>
