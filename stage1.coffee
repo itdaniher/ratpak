@@ -17,23 +17,27 @@ uidgen = (a) ->
 exprs = _.flatten(b["lines"])
 
 nodes = exprs.map (p) ->
-	label = if p.args.length == 0 then p.proc else p.proc + "(" + (JSON.stringify p.args) + ")"
+	label = if p.args.length == 0 then p.proc else if p.args.length == 1 then p.proc + "(" + p.args[0] + ")" else p.proc + "(" + (JSON.stringify p.args) + ")"
 	[uidgen(p), {pname: p.proc, label: label, args:p.args}]
 
 getEdgesTo = (n, g) ->
 	out = []
 	ny = n.y-1
 	nx = n.x-(n.modif=="^")
-	if ny != 0 and n.refs[0] == undefined
+	if n.proc == "%"
+		g.filter((y) -> y.x >= n.x & y.y == ny).forEach (e) ->
+			out.push([uidgen(e), uidgen(n)])
+	else if ny != 0 and n.refs[0] == undefined
 		out.push([uidgen(_.findWhere(g, {"x": nx, "y": ny})), uidgen(n)])
-	n.refs.forEach (r) ->
-		if n.refs[0] < 0
-			out.push([uidgen(_.findWhere(g, {"x": nx, "y": ny})), uidgen(g.filter((x)-> x.refs.filter((y) -> y==-r).length)[0])])
-		else
-			out.push([(uidgen(g.filter((z) -> (z["x"] == nx) && (z["y"] == ny))[0])), uidgen(n)])
-	out[0]
+	if n.refs[0] < 0
+		n.refs.forEach (r) ->
+			if r < 0
+				out.push [uidgen(_.findWhere(g, {"x": nx, "y": ny})), uidgen(g.filter((x)-> x.refs.filter((y) -> y==-r).length)[0])]
+	else if n.refs[0] > 0
+		out.push([(uidgen(g.filter((z) -> (z["x"] == nx) && (z["y"] == ny))[0])), uidgen(n)])
+	out
 
-edges = [getEdgesTo d, exprs for d in exprs][0].filter((x) -> x?)
+edges = exprs.map((d)->getEdgesTo(d, exprs)).filter((x) -> x?).reduce(((x,y) -> x.concat(y)), [])
 
 dropMe = nodes.filter((x) -> x[1].pname == "\"").filter((x) -> x?).map((x) -> x[0])
 edges = edges.filter((y) -> ((dropMe.lastIndexOf(y[0]) < 0) and (dropMe.lastIndexOf(y[1]) < 0)))
