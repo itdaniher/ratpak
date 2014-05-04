@@ -15,7 +15,7 @@ use rtlsdr::*;
 use kpn::*;
 use bitfount::*;
 use vidsink2::*;
-use std::comm::{Receiver, Sender, channel};
+use std::comm::{Receiver, Sender, channel, Messages};
 use std::num;
 use std::vec;
 
@@ -25,6 +25,10 @@ pub fn applicator<T: Clone+Send>(u: Receiver<T>, v: Sender<T>, f: |T|->T) {
 	loop {
 		v.send(f(u.recv()))
 	}
+}
+
+pub fn matcher<T: Send+Clone, U: Send+Clone>(u: Receiver<T>, v: Sender<U>, f: |x: Messages<T>,v: Sender<U>|) {
+	f(u.iter(), v)
 }
 
 pub fn crossApplicator<T: Clone+Send, U: Clone+Send>(u: Receiver<T>, v: Sender<U>, f: |T|->U) {
@@ -120,3 +124,4 @@ pub fn binconv(u: Receiver<Vec<uint>>, v: Sender<Vec<uint>>, l: ~[uint]) {
 		v.send(eat(u.recv().slice_from(0), l.clone()))
 	}
 }
+
