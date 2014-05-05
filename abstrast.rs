@@ -47,14 +47,15 @@ pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: ast::P<ast::Ty>, block
 	}
 }
 
-pub fn spawn(exp: P<ast::Expr>) -> P<ast::Expr> {
+pub fn spawn(fname: ~str, args: Vec<P<ast::Expr>>) -> P<ast::Expr> {
+	let exp: P<ast::Expr> = expr_call(expr_path(fname.clone()), args);
 	let decl = ast::FnDecl {
 		inputs: vec!(),
 		output: ty_infer(),
 		cf: ast::Return,
 		variadic: false
 	};
-	expr_call(expr_path("native::task::spawn_opts"), vec!(expr_call(expr_path("std::task::TaskOpts::new"), vec!()), expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
+	expr_call(expr_path("native::task::spawn_opts"), vec!(parse_expr(format!("std::task::TaskOpts \\{notify_chan: None, name: Some(\"{}\".into_maybe_owned()), stack_size: None, stdout: None, stderr:None\\}", fname)), expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
 }
 
 pub fn block(stmts: Vec<P<ast::Stmt>>, expr: Option<P<ast::Expr>>) -> P<ast::Block> {

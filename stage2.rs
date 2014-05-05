@@ -32,11 +32,12 @@ fn expandPrim(nodepname: ~str) -> ~str {
 		'+' => ~"sumAcross",
 		'Z' => ~"delay",
 		'%' => ~"grapes",
-		'b' => ~"binconv",
+		'B' => ~"binconv",
 		'$' => ~"shaper",
 		'?' => ~"matcher",
 		'&' => ~"crossApplicator",
 		'!' => ~"applicator",
+		'@' => ~"softSource",
 		'.' => expandPrim(nodepname.slice_from(1).to_owned()).append("Vecs"),
 		 _  => nodepname
 	}
@@ -104,9 +105,9 @@ fn main () {
 			_ => {
 					let ftx = txers.get(0).slice_to(13).to_str().append("0");
 					let frx = (~"r").append(ftx.slice_from(1));
-					spawnExprs.push(spawn(expr_call(expr_path("fork".to_str()),
+					spawnExprs.push(spawn(~"fork",
 						vec!(expr_path(frx), expr_owned_vec(txers.iter().map(
-							|x| expr_path(x.slice_from(0))).collect())))));
+							|x| expr_path(x.slice_from(0))).collect()))));
 					channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.clone()),
 						pat_name(frx.clone()))), expr_call(expr_path("channel"), vec!())));
 					argv.push(expr_path(ftx))
@@ -130,7 +131,7 @@ fn main () {
 			}
 		);
 
-		spawnExprs.push(spawn(expr_call(expr_path(n), argv)));
+		spawnExprs.push(spawn(n, argv));
 
 		txers.iter().map(|txer| {
 			let dstrm = (~"r").append((*txer).slice_from(1));
