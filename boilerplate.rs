@@ -7,14 +7,19 @@ extern crate vidsink2;
 extern crate kissfft;
 extern crate num;
 extern crate dsputils;
+extern crate time;
+extern crate oblw;
+extern crate outlet;
 
-use native::task;
-use num::complex;
 use kissfft::FFT;
 use rtlsdr::*;
 use kpn::*;
 use bitfount::*;
 use vidsink2::*;
+use oblw::*;
+use outlet::*;
+use native::task;
+use num::complex;
 use std::comm::{Receiver, Sender, channel, Messages};
 use std::num;
 use std::vec;
@@ -25,6 +30,12 @@ pub fn applicator<T: Clone+Send>(u: Receiver<T>, v: Sender<T>, f: |T|->T) {
 	loop {
 		v.send(f(u.recv()))
 	}
+}
+
+pub fn softSource<T: Send+Clone>(v: Sender<T>, f: |x: Sender<T>|) {
+	f(v);
+	let (s,r) = channel::<()>();
+	r.recv();
 }
 
 pub fn matcher<T: Send+Clone, U: Send+Clone>(u: Receiver<T>, v: Sender<U>, f: |x: Messages<T>,v: Sender<U>|) {
