@@ -13,6 +13,7 @@ main
 	.&'|&x| {x as f32}' .&'|&x| {x as f32}'
 	.* 'vec!(1., 1., 1., 1e-1, 1.)' .* 'vec!(1., 1., 1., 1e-1, 1e-1)'
 	%
+	differentiator
 	printSink
 
 => biquaddf1 (a0, a1, a2, b0, b1, b2) =>
