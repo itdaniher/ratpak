@@ -1,6 +1,6 @@
 all: stage3.rs
 
-libabstrast.so:
+libabstrast*.so:
 	rustc --crate-type=dylib abstrast.rs
 
 stage2: libabstrast*.so
