@@ -39,7 +39,7 @@ getEdgesTo = (n, g) ->
 
 edges = exprs.map((d)->getEdgesTo(d, exprs)).filter((x) -> x?).reduce(((x,y) -> x.concat(y)), [])
 
-dropMe = nodes.filter((x) -> x[1].pname == "\"").filter((x) -> x?).map((x) -> x[0])
+dropMe = nodes.filter((x) -> x[1].pname == "").filter((x) -> x?).map((x) -> x[0])
 edges = edges.filter((y) -> ((dropMe.lastIndexOf(y[0]) < 0) and (dropMe.lastIndexOf(y[1]) < 0)))
 nodes = nodes.filter((x) -> _.flatten(edges).lastIndexOf(x[0]) > -1)
 

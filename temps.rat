@@ -2,10 +2,10 @@ main
 	rtlSourceCmplx (4339e5, 200, 256e3)
 	^ (,&'|x|{x.norm().abs()}') fft (512, 0)
 	(trigger) (,&'|x|{x.norm().abs()}')
-	(discretize) (^ ,+@2 @3)
+	(discretize) ,+@2 @3
 	rle ^ (,Z) vidSink
-	dle 256e3 ^ ,+@-2 ,* 'vec([-5e-4f32,..512])'
-	?'|mut a,b| {a.map(|x| {match x { Dur(1, 2e-4..6e-4) => match a.next() { Some(Dur(0, 1.5e-3..2.5e-3)) => b.send(Some(0u)), Some(Dur(0, 3.5e-3..4.5e-3)) => b.send(Some(1u)), _ => b.send(None)}, _ => b.send(None)}}).last();()}' " ,+@-3
+	dle 256e3 ^ @-2 ,* 'vec([-5e-4f32,..512])'
+	(?'|mut a,b| {a.map(|x| {match x { Dur(1, 2e-4..6e-4) => match a.next() { Some(Dur(0, 1.5e-3..2.5e-3)) => b.send(Some(0u)), Some(Dur(0, 3.5e-3..4.5e-3)) => b.send(Some(1u)), _ => b.send(None)}, _ => b.send(None)}}).last();()}') @0 @-3
 	$ 36
 	(^ B[4,8,4,12,8] B[4,8,2,10,12])
 	(&'|x| {if *x.get(0) == 5 {Some(x)} else {None}}') (&'|x| {if *x.get(0) != 5 {Some(x)} else {None}}')
@@ -18,7 +18,6 @@ main
 	printSink
 
 main
-	"
 	!'|x|{x}' @12
 	&'|x| {~"d"}'
 	&getCode
@@ -31,5 +30,5 @@ main
 	+@2 @3 @4
 	^ (Z) (&'|x| -> bool { return x > 500 }')
 	^ (+@-2) (* -5e-4) differentiator
-	" +@-3 !@-12
+	@0 +@-3 !@-12
 

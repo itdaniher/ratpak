@@ -11,11 +11,11 @@ proto =
 	p: name {@start = line(); p}
 
 argless =
-	[%\"]
+	[%]
 
 name =
 	$("," name)
-	/ [@*+?%&!$]
+	/ [*+?%&!$]
 	/ [A-Z]
 	/ aname
 
@@ -60,6 +60,7 @@ proc =
 	/ n: name r: ref+ { @row += 1;{"proc":n, "refs": r, "y":line() - @start, "x":@row, "args": []} }
 	/ n: name a: args { @row += 1;{"proc": n, "args": a, "y":line() - @start, "x":@row, "refs":[]} }
 	/ n: name { @row += 1;{"proc": n, "y":line() - @start, "x":@row, "refs":[],args:[] }}
+	/ r: ref { @row += 1;{"proc":"", "y":line()-@start, "x":@row, "refs":[r],args:[]}}
 
 expr =
 	" "? "(" " "? e:expr " "? ")" " "? {e}
