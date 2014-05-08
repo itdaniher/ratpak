@@ -21,7 +21,6 @@ struct Graph {
 	edges: Vec<Vec<~str>>,
 	nodes: Vec<(~str, Node)>,
 	name: ~str,
-	consts: Option<Vec<~str>>,
 	inrx: bool,
 	outtx: bool,
 }
@@ -38,7 +37,7 @@ fn expandPrim(nodepname: ~str) -> ~str {
 		'&' => ~"crossApplicator",
 		'!' => ~"applicator",
 		'@' => ~"softSource",
-		'.' => expandPrim(nodepname.slice_from(1).to_owned()).append("Vecs"),
+		',' => expandPrim(nodepname.slice_from(1).to_owned()).append("Vecs"),
 		 _  => nodepname
 	}
 }
@@ -52,7 +51,7 @@ fn getDefaultArgs(nodepname: ~str) -> ~str {
 			_ => ~"",
 		},
 		2 => match (nodepname.char_at(0), nodepname.char_at(1)) {
-			('.', x) => "range(0,512).map(|_| ".to_owned()
+			(',', x) => "range(0,512).map(|_| ".to_owned()
 				.append(getDefaultArgs(std::str::from_char(x))).append(").collect()"),
 			_ => ~""
 		},
@@ -142,12 +141,7 @@ fn main () {
 
 	channelStmts.push_all_move(spawnExprs.move_iter().map(|x| stmt_semi(x)).collect());
 
-	let function = match y.consts.clone() {
-		Some(fnargs) => fn_item(y.name,
-			fnargs.move_iter().map(|x| {ast::Arg {ty: ty_infer(), pat: pat_name(x.slice_from(0)), id: 0}}).collect(),
-			ty_nil(), block(channelStmts, None)),
-		None => fn_item(y.name, vec!(), ty_nil(), block(channelStmts, None))
-	};
+	let function = fn_item(y.name, vec!(), ty_nil(), block(channelStmts, None));
 
 	println!("{}", File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap());
 	println!("{}", syntax::print::pprust::item_to_str(&function));
