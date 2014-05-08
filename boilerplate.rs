@@ -13,13 +13,12 @@ extern crate oblw;
 extern crate outlet;
 
 
-use kissfft::FFT;
+use kissfft::fft;
 use collections::bitv;
 use rtlsdr::*;
 use kpn::*;
 use bitfount::*;
 use vidsink2::*;
-use oblw::*;
 use outlet::*;
 use native::task;
 use num::complex;
