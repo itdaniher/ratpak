@@ -14,16 +14,14 @@ argless =
 	[%\"]
 
 name =
-	$("." name)
-	/ [@,*+?%><&!$]
+	$("," name)
+	/ [@*+?%&!$]
+	/ [A-Z]
 	/ aname
 
 aname =
 	a: $([\-a-zA-Z]+[0-9]*)
 	/ a: $("-"?[a-zA-Z]+[0-9]*)
-
-names =
-	"(" " "? ns:$((n:name ","? " "?{n})+) " "? ")" {ns.split(", ")}
 
 float =
 	f: $("-"?"0."?[-e0-9]+) {parseFloat(f)}
@@ -32,8 +30,7 @@ int =
 	i: $("-"? [0-9]+) {parseInt(i)}
 
 str =
-	"'" s:$([a-zA-Z0-9]+) "'" {s}
-	/ "'" s:$([^']+) "'" {s}
+	"'" s:$([^']+) "'" {s}
 
 values =
 	"(" " "? v:(values+) " "? ")" ","? " "? {v}
@@ -46,7 +43,7 @@ values =
 ref =
 	" "? "(" " "? r:ref " "? ")" " "? {r}
 	/ " " r:ref " "? {r}
-	/ "." r:int {r}
+	/ "@" r:int {r}
 
 args =
 	" "? "(" a:args ")" " "? {a}
@@ -78,4 +75,5 @@ line =
 	"\t" " "* ea:(expr " "?)+ "\n"{@row = 0; @_.without(@_.flatten(ea), null, " ")}
 
 network =
-	i:"=>"? " "? id:proto " "? args:names? " "? o:"=>"? "\n" lines:line+ "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "const": args, "lines": lines}}
+	i:"=>"? " "? id:proto " "? o:"=>"? "\n" lines:line+ "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "lines": lines}}
+
