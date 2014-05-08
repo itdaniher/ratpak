@@ -59,6 +59,7 @@ modif =
 proc =
 	" "? "(" " "? p:proc " "? ")" " "? {p}
 	/ n: argless { @row += 1;{"proc": n, "y":line() - @start, "x":@row, "refs":[], "args": []}}
+	/ n: name a: args r: ref+ { @row += 1;{"proc": n, "args": a, "y":line() - @start, "x":@row, "refs":r} }
 	/ n: name r: ref+ { @row += 1;{"proc":n, "refs": r, "y":line() - @start, "x":@row, "args": []} }
 	/ n: name a: args { @row += 1;{"proc": n, "args": a, "y":line() - @start, "x":@row, "refs":[]} }
 	/ n: name { @row += 1;{"proc": n, "y":line() - @start, "x":@row, "refs":[],args:[] }}
