@@ -1,5 +1,6 @@
 #![feature(globs)];
 extern crate kpn;
+extern crate collections;
 extern crate bitfount;
 extern crate rtlsdr;
 extern crate native;
@@ -11,7 +12,9 @@ extern crate time;
 extern crate oblw;
 extern crate outlet;
 
+
 use kissfft::FFT;
+use collections::bitv;
 use rtlsdr::*;
 use kpn::*;
 use bitfount::*;
@@ -33,7 +36,7 @@ pub fn applicator<T: Clone+Send>(u: Receiver<T>, v: Sender<T>, f: |T|->T) {
 }
 
 pub fn softSource<T: Send+Clone>(v: Sender<T>, f: |x: Sender<T>|) {
-	f(v);
+	f(v.clone());
 	let (s,r) = channel::<()>();
 	r.recv();
 }
@@ -73,9 +76,9 @@ pub fn fork<T: Clone+Send>(u: Receiver<T>, v: ~[Sender<T>]) {
 	}
 }
 
-pub fn mulAcross<T: Float+Send>(u: ~[Receiver<T>], v: Sender<T>, c: T) {
+pub fn mulAcross<T: Float+Send>(u: Receiver<T>, v: Sender<T>, c: T) {
 	loop {
-		v.send(u.iter().map(|y| y.recv()).fold(c, |b, a| b*a))
+		v.send(u.recv()*c)
 	}
 }
 
@@ -98,12 +101,14 @@ pub fn sumAcrossVecs<T: Float+Send>(u: ~[Receiver<Vec<T>>], v: Sender<Vec<T>>, c
 }
 
 pub fn grapes<T: Send>(u: ~[Receiver<T>], v: Sender<T>) {
+	let mut timer = std::io::Timer::new().unwrap();
 	loop {
 		for x in u.iter() {
 			match x.try_recv() {
 				Ok(d) => v.send(d),
 				Err(_) => ()
 			}
+			timer.sleep(10);
 		}
 	}
 }
