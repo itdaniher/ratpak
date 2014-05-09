@@ -5,9 +5,9 @@ main
 	(discretize) ,+@2 @3
 	rle ^ (,Z) vidSink
 	dle 256e3 ^ @-2 ,* 'vec([-5e-4f32,..512])'
-	(?'|mut a,b| {a.map(|x| {match x { Dur(1, 2e-4..6e-4) => match a.next() { Some(Dur(0, 1.5e-3..2.5e-3)) => b.send(Some(0u)), Some(Dur(0, 3.5e-3..4.5e-3)) => b.send(Some(1u)), _ => b.send(None)}, _ => b.send(None)}}).last();()}') @0 @-3
-	$ 36
-	(^ B[4,8,4,12,8] B[4,8,2,10,12])
+	(^ (?'|mut a,b| {a.map(|x| {match x { Dur(1, 2e-4..6e-4) => match a.next() { Some(Dur(0, 1.5e-3..2.5e-3)) => b.send(Some(0u)), Some(Dur(0, 3.5e-3..4.5e-3)) => b.send(Some(1u)), _ => b.send(None)}, _ => b.send(None)}}).last();()}') (?'|mut a,b| {a.map(|x| {match x {Dur(1, ref d@125e-6..250e-6) | Dur(1, ref d @500e-6..650e-6) => {match a.next().unwrap() {Dur(0, ref e @500e-6..650e-6) | Dur(0, ref e@125e-6..250e-6) => b.send(Some(if d > e {1u} else {0u})),_ => b.send(None)}}, _ => b.send(None)}}).last();()}')) @0 @-3
+	$36 $24
+	(^ B[4,8,4,12,8] B[4,8,2,10,12]) printSink
 	(&'|x| {if *x.get(0) == 5 {Some(x)} else {None}}') (&'|x| {if *x.get(0) != 5 {Some(x)} else {None}}')
 	? ?
 	,&'|&x| {x as f32}' ,&'|&x| {x as f32}'
