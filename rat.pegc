@@ -44,6 +44,7 @@ ref =
 	" "? "(" " "? r:ref " "? ")" " "? {r}
 	/ " " r:ref " "? {r}
 	/ "@" r:int {r}
+	/ "@" r:aname {r}
 
 args =
 	" "? "(" a:args ")" " "? {a}

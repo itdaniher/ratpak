@@ -15,7 +15,6 @@ uidgen = (a) ->
 	("00"+a.y).slice(-3) + ("00"+a.x).slice(-3)
 
 exprs = _.flatten(b["lines"])
-
 nodes = exprs.map (p) ->
 	label = if p.args.length == 0 then p.proc else if p.args.length == 1 then p.proc + "(" + p.args[0] + ")" else p.proc + "(" + (JSON.stringify p.args) + ")"
 	[uidgen(p), {pname: p.proc, label: label, args:p.args}]
@@ -24,20 +23,24 @@ getEdgesTo = (n, g) ->
 	out = []
 	ny = n.y-1
 	nx = n.x - g.filter((z) ->(z.y == n.y) and (z.x <= n.x) and (z.modif=="^")).length
+	h = g.filter((z) -> (z["x"] == nx) && (z["y"] == ny))[0]
+	if h != undefined
+		o = [uidgen(h), uidgen(n)]
 	if n.proc == "%"
 		g.filter((y) -> y.x >= n.x & y.y == ny).forEach (e) ->
 			out.push([uidgen(e), uidgen(n)])
 	else if ny != 0 and n.refs[0] == undefined
-		out.push([uidgen(_.findWhere(g, {"x": nx, "y": ny})), uidgen(n)])
-	if n.refs[0] < 0
-		n.refs.forEach (r) ->
-			if r < 0
-				out.push [uidgen(_.findWhere(g, {"x": nx, "y": ny})), uidgen(g.filter((x)-> x.refs.filter((y) -> y==-r).length)[0])]
-	else if n.refs[0] > 0
-		out.push([(uidgen(g.filter((z) -> (z["x"] == nx) && (z["y"] == ny))[0])), uidgen(n)])
+		out.push(o)
+	n.refs.forEach (r, i) ->
+		if r[0] == "x"
+			out.push [uidgen(h), uidgen(g.filter((x)-> x.refs.filter((y) -> ("o"+r[1]) == y).length)[0])]
+		else if r[0] == "o" and i > 0
+			out.push o
+		else
+			console.error([n, h, [nx,ny]])
 	out
 
-edges = exprs.map((d)->getEdgesTo(d, exprs)).filter((x) -> x?).reduce(((x,y) -> x.concat(y)), [])
+edges = exprs.map((d)->getEdgesTo(d, exprs)).filter((x) -> x?).reduce(((x,y) -> x.concat(y)), []).filter((x) -> x != undefined)
 
 dropMe = nodes.filter((x) -> x[1].pname == "").filter((x) -> x?).map((x) -> x[0])
 edges = edges.filter((y) -> ((dropMe.lastIndexOf(y[0]) < 0) and (dropMe.lastIndexOf(y[1]) < 0)))
