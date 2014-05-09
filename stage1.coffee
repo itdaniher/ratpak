@@ -23,7 +23,7 @@ nodes = exprs.map (p) ->
 getEdgesTo = (n, g) ->
 	out = []
 	ny = n.y-1
-	nx = n.x-(n.modif=="^")
+	nx = n.x - g.filter((z) ->(z.y == n.y) and (z.x <= n.x) and (z.modif=="^")).length
 	if n.proc == "%"
 		g.filter((y) -> y.x >= n.x & y.y == ny).forEach (e) ->
 			out.push([uidgen(e), uidgen(n)])
