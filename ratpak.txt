@@ -1,38 +1,86 @@
-ratpak is a declarative programming language for stream processing
-it is statically typed, but with primitive functions supported across all combinations of basic types
-ratpak operates on an infinite sequence of integers or floats, preferring machine widths (32b/64b) unless specifically instructed elsewhere
-ratpak processes can accept packetized data as a sequence of finite length vectors. these vectors will be implicitly cast to a sequence of atomic tokens where applicable.
+RatPak is a declarative language for defining graphs of interconnected processes. Such graphs are invaluable when working to describe manipulations on streams of information, like those produced by sampling analog values in the real world. Directed graphs are capable of concisely describing discrete time signal processing algorithms and the successive transformations associated with demodulating and decoding mixed-domain communication protocols. As RatPak compiles to Rust source code which benefits from LLVM's extensive set of optimizations and Rust's excellent concurrency primitives, a RatPak flowgraph can directly produce a corresponding optimized Linux executable. RatPak has been routinely used to describe flowgraphs spanning dozens of OS threads performing moderately complex digital signal processing manipulations on millions of samples per second, live.
 
-a ratpak program is a plaintext file containing one or more process definitions
+A RatPak flowgraph builds off of an ASCII representation of a directed tree to include syntax for describing connections, as well as syntax for describing processes. RatPak offers a set of useful stream manipulations as builtins (defined in boilerplate.rs,) and is well complemented by the array of functionality of [LibRedio]().
 
-a ratpak process definition is identified by a string, and can make use of any process definitions from any rust source files or any ratpak files in ./ or ./src
+The trivial case of a flowgraph contains two elements, a source (process producing a stream) and a sink (process accepting a stream.) This can be trivially extended to yield arbitrarily long one-dimensional sequences starting with a source, ending with a sink, with an arbitrary number of processing nodes each accepting and producing exactly one stream. In RatPak, this looks like:
 
-a process definition is a flowgraph prefixed by a process prototype.
+```
 
-a process prototype starts with an optional '=>' demarkating an the existence of an input stream, is followed by a sequence of alphanumeric characters by which it can later be referenced, an optional parenthetical sequence of variable names, and an optional '=>' indicating the existence of an output stream
+main
+	source
+	procA
+	procB
+	...
+	procY
+	procZ
+	sink
 
-the ratpak compiler will look for a process with no inputs and no outputs called 'main' and instantiate it, if found
+```
 
-a ratpak flowgraph is fully directed, can be cyclical, has either one or zero sources, and one or zero sinks
+Each process has its own line, and is implicitly connected to the output of the process above and input of the process below.
 
-a ratpak flowgraph consists of tab indented lines, which are otherwise whitespace insensitive.
+Unfortunately, the descriptive power of 1D signal processing chains leaves a bit to be desired.
 
-a line in a ratpak flowgraph may consist of up to N expressions containing, where N is the number of non-terminating expressions on the above line
-each expression has implicit access to the output of the expression above and the input of the expression below
+To begin to render the complexity of a flowgraph easily describeable, RatPak uses a small set of symbols to represent forks, merges, and arbitrary point-to-point connections.
 
-the following characters are ratpak primitives: ^ v " . Z    + * - < >
-	^ separates a pair of ratpak expressions accepting the same input
-	v separates a pair of ratpak expressions returning output to the same output
-	" represents a no-relative-delay connection between .upper and .lower
-	. represents a relative stream reference, accepting either a positive or negative integer containing the distance (sloc) from the other reference.
-		a reference to a stream a negative distance away ends a path
-	Z sends a null token on startup, and then passes .upper to .lower, acting as a unit delay
-	+ * - < > all represent their standard arithmatic operators, but as monads accept one or more numerical constant or other streams to broadcast .upper against
+Forks are demarkated using the carrot '^' character - all processes in an expression prefaced by the carrot accept the same input source. Forks are implemented as a task accepting a single receiver and a list of senders. When the read completes, the token is copied and sent for each member in the list of senders.
 
-a ratpak process definition ends with a newline not followed immediately by \t
+```
+main
+	source
+	(^ procA printSink)
+	printSink
+```
 
-ratpak code is not sensitive to the existence of the space character " ", allowing flowgraph definitions to be autoformated by a text editor
+Joins offer more semantic variety - while forks are explicitly synchronous, there may come times when it is necessary to merge multiple streams presenting data at different rates. A process semantically equivalent to the 'select' function typically offered for managing multiple socket connections is provided as an extension to KPN semantics. This process accepts an arbitrary number of inputs of the same type and has a single output that returns any token on any input at any time. This out-of-order merge is represented using the percent sign '%' character.
 
-static numerical primitives start with a digit or an dash and are ended by a non digit character
+```
+main
+	source
+	^ procA procB
+	%
+	printSink
+```
 
-each line in a ratpak flowgraph has implicit access to the output of the process above it and the input of the process below it
+The other common variety of joining multiple streams of information is a reduce-across operator, folding a function across the sequence generated by concat'ing a token received from each stream. Addition and multiplication are commonly used reducing operators. Assuming all inputs are synchronous with respect to eachother, an output token is produced synchronous to the input tokens. This fold-across operator is represented using the forward slash '/' character prefacing a process identifier. The process is provided a list of stream inputs to reduce across and a stream output on which to send the results.
+
+```
+main
+	source
+	^ procA procB
+	/*
+	printSink
+```
+
+RatPak also offers arbitrary named stream connections. A stream must have exactly two references, an input, and an output. The connection input is positioned downstream of the process from which it accepts tokens. The connection output is provided as an argument to a process. A connection name is prefaced by the at-sign '@' character and either 'x' for an input connection or 'o' for an output connection.
+
+```
+main
+	source
+	+ @oa @ob
+	Z
+	^ *-1e3 @xa @xc
+	@xb
+	printSink @oc
+```
+
+Processes used in RatPak are defined in Rust, either as public functions in an included library, or using RatPak to inline a Rust anonymous expression as a stream manipulation. Rust functions used in RatPak should have a camelCase name starting with a lower case letter. The file 'boilerplate.rs' imports a majority of LibRedio into scope, providing basic DSP and decoding utilities. Rust functions can have any number of inputs, outputs, and arguments, but they must be in that order. Multiple inputs or outputs are passed as a Vec<Receiver<T>> or Vec<Sender<T>> respectively. Processes should not terminate in normal operation, and should rely on blocking calls to recv() for synchronization purposes.
+
+
+```
+pub fn printSink<T: std::fmt::Show+Send>(u: Receiver<T>) {
+        loop {
+                println!("{}", u.recv())
+        }
+}
+```
+
+Process in RatPak can also be inlined as Rust lambda expressions of an appropriate format. The following cases have syntax defined. Builtins also have well-defined variants for elementwise application of a function to members of a vector.
+
+```
+|T| -> T
+|T| -> U
+|Messages<T>, Sender<U>|
+```
+
+These options allow a developer to specify terse transformations of homogenous and heterogenous type, as well as terse relationships between an object representing the infinite list of input tokens and an output stream. Of these three options and their variants, only the third allows local state between successive tokens, making it of significant use in parsing. Note that the third structure should never terminate. This third option is often used in conjunction with Rust iterator-style manipulations.
