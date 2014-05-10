@@ -75,7 +75,7 @@ pub fn printSink<T: std::fmt::Show+Send>(u: Receiver<T>) {
 }
 ```
 
-Process in RatPak can also be inlined as Rust lambda expressions of an appropriate format. The following cases have syntax defined. Builtins also have well-defined variants for elementwise application of a function to members of a vector.
+Process in RatPak can also be inlined as Rust lambda expressions of an appropriate format. The following two terminating and one nonterminating cases have syntax defined.
 
 ```
 |T| -> T
@@ -83,4 +83,7 @@ Process in RatPak can also be inlined as Rust lambda expressions of an appropria
 |Messages<T>, Sender<U>|
 ```
 
-These options allow a developer to specify terse transformations of homogenous and heterogenous type, as well as terse relationships between an object representing the infinite list of input tokens and an output stream. Of these three options and their variants, only the third allows local state between successive tokens, making it of significant use in parsing. Note that the third structure should never terminate. This third option is often used in conjunction with Rust iterator-style manipulations.
+These options allow a developer to specify terse transformations of homogenous and heterogenous type, as well as terse relationships between an object representing the infinite list of input tokens and an output stream. Of these three options and their variants, only the third allows local state between successive tokens, making it of significant use in parsing. Note that the third structure should never terminate. This third option is often used in conjunction with Rust [iterator-style manipulations](http://static.rust-lang.org/doc/master/core/iter/trait.Iterator.html). Inlined Rust expressions are surrounded in single quotes "'" and prefaced by an exclaimation mark "!" for the homogenously typed case, an ampersand "&" for the heterogenously typed case, or a question mark "?" for the nonterminating process definition.
+
+The terminating expressions can be modified by a prepended comma "," to indicate the application of the method across a vector.
+
