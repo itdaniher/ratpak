@@ -26,11 +26,16 @@ use std::comm::{Receiver, Sender, channel, Messages};
 use std::num;
 use std::vec;
 
-pub fn asRe<T: Float> ( d: Vec<T> ) -> Vec<complex::Cmplx<T>> { d.iter().map(|&x| {complex::Cmplx {re: x, im: num::zero()}}).collect() }
 
 pub fn applicator<T: Clone+Send>(u: Receiver<T>, v: Sender<T>, f: |T|->T) {
 	loop {
 		v.send(f(u.recv()))
+	}
+}
+
+pub fn applicatorVecs<T: Clone+Send>(u: Receiver<Vec<T>>, v: Sender<Vec<T>>, f: |&T|->T) {
+	loop {
+		v.send(u.recv().iter().map(|x|f(x)).collect())
 	}
 }
 
@@ -51,12 +56,6 @@ pub fn crossApplicator<T: Clone+Send, U: Clone+Send>(u: Receiver<T>, v: Sender<U
 }
 
 pub fn crossApplicatorVecs<T: Clone+Send, U: Clone+Send>(u: Receiver<Vec<T>>, v: Sender<Vec<U>>, f: |&T|->U) {
-	loop {
-		v.send(u.recv().iter().map(|x|f(x)).collect())
-	}
-}
-
-pub fn applicatorVecs<T: Clone+Send>(u: Receiver<Vec<T>>, v: Sender<Vec<T>>, f: |&T|->T) {
 	loop {
 		v.send(u.recv().iter().map(|x|f(x)).collect())
 	}
