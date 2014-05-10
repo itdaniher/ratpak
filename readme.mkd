@@ -1,8 +1,14 @@
+## Introduction
+
 RatPak is a declarative language for defining graphs of interconnected processes. Such graphs are invaluable when working to describe manipulations on streams of information, like those produced by sampling analog values in the real world. Directed graphs are capable of concisely describing discrete time signal processing algorithms and the successive transformations associated with demodulating and decoding mixed-domain communication protocols. As RatPak compiles to Rust source code which benefits from LLVM's extensive set of optimizations and Rust's excellent concurrency primitives, a RatPak flowgraph can directly produce a corresponding optimized Linux executable. RatPak has been routinely used to describe flowgraphs spanning dozens of OS threads performing moderately complex digital signal processing manipulations on millions of samples per second, live.
 
 A RatPak flowgraph builds off of an ASCII representation of a directed tree to include syntax for describing connections, as well as syntax for describing processes. RatPak offers a set of useful stream manipulations as builtins (defined in boilerplate.rs,) and is well complemented by the array of functionality of [LibRedio]().
 
-The trivial case of a flowgraph contains two elements, a source (process producing a stream) and a sink (process accepting a stream.) This can be trivially extended to yield arbitrarily long one-dimensional sequences starting with a source, ending with a sink, with an arbitrary number of processing nodes each accepting and producing exactly one stream. In RatPak, this looks like:
+## Semantics
+
+The trivial case of a flowgraph contains two elements, a source (process producing a stream) and a sink (process accepting a stream.) This can be trivially extended to yield arbitrarily long one-dimensional sequences starting with a source, ending with a sink, with an arbitrary number of processing nodes each accepting and producing exactly one stream.
+
+In RatPak, this looks like:
 
 ```
 
@@ -23,6 +29,8 @@ Unfortunately, the descriptive power of 1D signal processing chains leaves a bit
 
 To begin to render the complexity of a flowgraph easily describeable, RatPak uses a small set of symbols to represent forks, merges, and arbitrary point-to-point connections.
 
+### Forks
+
 Forks are demarkated using the carrot '^' character - all processes in an expression prefaced by the carrot accept the same input source. Forks are implemented as a task accepting a single receiver and a list of senders. When the read completes, the token is copied and sent for each member in the list of senders.
 
 ```
@@ -31,6 +39,8 @@ main
 	(^ procA printSink)
 	printSink
 ```
+
+### Joins
 
 Joins offer more semantic variety - while forks are explicitly synchronous, there may come times when it is necessary to merge multiple streams presenting data at different rates. A process semantically equivalent to the 'select' function typically offered for managing multiple socket connections is provided as an extension to KPN semantics. This process accepts an arbitrary number of inputs of the same type and has a single output that returns any token on any input at any time. This out-of-order merge is represented using the percent sign '%' character.
 
@@ -52,6 +62,8 @@ main
 	printSink
 ```
 
+### Arbitrary Connections
+
 RatPak also offers arbitrary named stream connections. A stream must have exactly two references, an input, and an output. The connection input is positioned downstream of the process from which it accepts tokens. The connection output is provided as an argument to a process. A connection name is prefaced by the at-sign '@' character and either 'x' for an input connection or 'o' for an output connection.
 
 ```
@@ -64,8 +76,11 @@ main
 	printSink @oc
 ```
 
+## Processes
+
 Processes used in RatPak are defined in Rust, either as public functions in an included library, or using RatPak to inline a Rust anonymous expression as a stream manipulation. Rust functions used in RatPak should have a camelCase name starting with a lower case letter. The file 'boilerplate.rs' imports a majority of LibRedio into scope, providing basic DSP and decoding utilities. Rust functions can have any number of inputs, outputs, and arguments, but they must be in that order. Multiple inputs or outputs are passed as a Vec<Receiver<T>> or Vec<Sender<T>> respectively. Processes should not terminate in normal operation, and should rely on blocking calls to recv() for synchronization purposes.
 
+### Externally Defined
 
 ```
 pub fn printSink<T: std::fmt::Show+Send>(u: Receiver<T>) {
@@ -75,6 +90,8 @@ pub fn printSink<T: std::fmt::Show+Send>(u: Receiver<T>) {
 }
 ```
 
+### Inlined
+
 Process in RatPak can also be inlined as Rust lambda expressions of an appropriate format. The following two terminating and one nonterminating cases have syntax defined.
 
 ```
@@ -83,18 +100,18 @@ Process in RatPak can also be inlined as Rust lambda expressions of an appropria
 |Messages<T>, Sender<U>|
 ```
 
-These options allow a developer to specify terse transformations of homogenous and heterogenous type, as well as terse relationships between an object representing the infinite list of input tokens and an output stream. Of these three options and their variants, only the third allows local state between successive tokens, making it of significant use in parsing. Note that the third structure should never terminate. This third option is often used in conjunction with Rust [iterator-style manipulations](http://static.rust-lang.org/doc/master/core/iter/trait.Iterator.html). Inlined Rust expressions are surrounded in single quotes "'" and prefaced by an exclaimation mark "!" for the homogenously typed case, an ampersand "&" for the heterogenously typed case, or a question mark "?" for the nonterminating process definition.
+These options allow a developer to specify terse transformations of homogenous and heterogenous type, as well as terse relationships between an object representing the infinite list of input tokens and an output stream. Of these three options and their variants, only the third allows local state between successive tokens, making it of significant use in parsing. Note that the third structure should never terminate. This third option is often used in conjunction with Rust [iterator-style manipulations](http://static.rust-lang.org/doc/master/core/iter/trait.Iterator.html). Inlined Rust expressions are surrounded in single quotes `'` and prefaced by an exclaimation mark `!` for the homogenously typed case, an ampersand `&` for the heterogenously typed case, or a question mark `?` for the nonterminating process definition.
 
-The terminating expressions can be modified by a prepended comma "," to indicate the application of the method across a vector.
+The terminating expressions can be modified by a prepended comma `,` to indicate the application of the method across a vector.
 
-
+## Built-Ins
 
 There are also a set of builtin processes useful for common activities in RatPak.
 
-The unit delay "Z" first sends a zero "0" then passes input to output. In feedback this acts as a unit delay shifting a stream against itself.
+The unit delay `Z` first sends a zero `0` then passes input to output. In feedback this acts as a unit delay shifting a stream against itself.
 
-A binary converter "B" accepts a list of field widths and a stream of sequences of binary values and returns a sequence of integer values, each composed of its respective number of bits.
+A binary converter `B` accepts a list of field widths and a stream of sequences of binary values and returns a sequence of integer values, each composed of its respective number of bits.
 
-The shaper function "$" accepts an integer argument "l" and a stream of Option<T>, returning a stream of Vec<T>, each token of length "l". Tokens are accumulated until there are "l" sequential tokens of Some(T) followed by a None value. When this pattern occurs, the resulting sequence Vec<T> is sent and reset. If a None token is received before the l'th Some(T) token, Vec<T> is reset.
+The shaper function `$` accepts an integer argument `l` and a stream of Option<T>, returning a stream of Vec<T>, each token of length `l`. Tokens are accumulated until there are `l` sequential tokens of Some(T) followed by a None value. When this pattern occurs, the resulting sequence Vec<T> is sent and reset. If a None token is received before the l'th Some(T) token, Vec<T> is reset.
 
 
