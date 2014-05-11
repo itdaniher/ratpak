@@ -5,12 +5,12 @@ main
 	(discretize) ,+@oa @ob
 	rle ^ (,Z) vidSink
 	dle 256e3 ^ @xa ,* 'vec([-5e-4f32,..512])'
-	(^ (?'|mut a,b| {a.map(|x| {match x { Dur(1, 2e-4..6e-4) => match a.next().unwrap() { Dur(0, 1.5e-3..2.5e-3) => b.send(Some(0u)), Dur(0, 3.5e-3..4.5e-3) => b.send(Some(1u)), _ => b.send(None)}, _ => b.send(None)}}).last();()}') (?'|mut a,b| {a.map(|x| {match x {Dur(1, ref d@125e-6..250e-6) | Dur(1, ref d @500e-6..650e-6) => {match a.next().unwrap() {Dur(0, ref e @500e-6..650e-6) | Dur(0, ref e@125e-6..250e-6) => b.send(Some(if d > e {1u} else {0u})),_ => b.send(None)}}, _ => b.send(None)}}).last();()}')) @0 @xb
+	(^ (?'|mut a,b| {a.map(|x| {match x { (1, 2e-4..6e-4) => match a.next().unwrap() { (0, 1.5e-3..2.5e-3) => b.send(Some(0u)), (0, 3.5e-3..4.5e-3) => b.send(Some(1u)), _ => b.send(None)}, _ => b.send(None)}}).last();()}') (?'|mut a,b| {a.map(|x| {match x {(1, ref d@125e-6..250e-6) | (1, ref d @500e-6..650e-6) => {match a.next().unwrap() {(0, ref e @500e-6..650e-6) | (0, ref e@125e-6..250e-6) => b.send(Some(if d > e {1u} else {0u})),_ => b.send(None)}}, _ => b.send(None)}}).last();()}')) @0 @xb
 	$36 $24
 	(^ B[4,8,4,12,8] B[4,8,2,10,12]) !'|mut x|{x.push(0); x}'
 	(&'|x| {if *x.get(0) == 5 {Some(x)} else {None}}') (&'|x| {if *x.get(0) != 5 {Some(x)} else {None}}') (@xc)
-	? ? !'|x|{x}'
-	,&'|&x| {x as f32}' ,&'|&x| {x as f32}'
+	? ?
+	,&'|&x| {x as f32}' (,&'|&x| {x as f32}')
 	,* 'vec!(1., 1., 1., 1e-1, 1.)' ,* 'vec!(1., 1., 1., 1e-1, 1e-1)' ,&'|&x| {x as f32}' @oc
 	%
 	differentiator
@@ -18,7 +18,7 @@ main
 	printSink
 
 main
-	!'|x|{x}' @12
+	!'|x|{x}' @o12
 	&'|x| {~"d"}'
 	&getCode
 	bitsToPackets
@@ -27,8 +27,8 @@ main
 	&'|x|{bitv::from_bytes(x.as_slice())}'
 	?'|x,y|{x.map(|a| a.iter().map(|b| y.send(b as uint)).last()).last();()}'
 	&'|x|{x as f32}'
-	+@2 @3 @4
+	+@o2 @o3 @o4
 	^ (Z) (&'|x| -> bool { return x > 500 }')
-	^ (+@-2) (* -5e-4) differentiator
-	@0 +@-3 !@-12
+	^ (+@x2) (* -5e-4) differentiator
+	@0 +@x3 !@x12
 
