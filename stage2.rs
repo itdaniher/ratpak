@@ -59,31 +59,30 @@ fn getDefaultArgs(nodepname: ~str) -> ~str {
 	}
 }
 
-fn getGraph() -> (Graph, ~[json::Json]) {
+fn getGraph() -> Vec<(Graph, Vec<json::Json>)> {
 	// get json graph and node arguments from stage2.json
 	let json_str_to_decode = File::open(&Path::new("./stage2.json")).read_to_str().unwrap();
 	let json_object = json::from_str(json_str_to_decode.to_owned()).unwrap();
 	let mut decoder = json::Decoder::new(json_object.clone());
 	// extract enum-guarded arguments from json, do not deguard
-	let args: ~[json::Json] = json_object.search(&~"nodes").unwrap().as_list().unwrap().iter()
-		.map(|x| {x.as_list().unwrap()[1].find(&~"args").unwrap().clone()}).collect();
-	let y: Graph = match Decodable::decode(&mut decoder) {
+	let args: Vec<Vec<json::Json>> = json_object.as_list().unwrap().iter().map(|x| x.search(&~"nodes").unwrap().as_list().unwrap().iter()
+		.map(|x| {x.as_list().unwrap()[1].find(&~"args").unwrap().clone()}).collect()).collect();
+	let y: Vec<Graph> = match Decodable::decode(&mut decoder) {
         Ok(v) => v,
 		Err(e) => fail!("Decoding error: {}", e)
 	};
-	println!("// nodes, edges: {}", (y.nodes.len(), y.edges.len()));
-	(y, args)
+	y.move_iter().zip(args.move_iter()).collect()
 }
 
-fn main () {
-	let (y, args) = getGraph();
+
+fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 	let mut channelStmts: Vec<ast::P<ast::Stmt>> = vec!();
 	let mut spawnExprs: Vec<ast::P<ast::Expr>> = vec!();
 	// this does the work - iterate over nodes and arguments
-	for ((uid, node), arg) in y.nodes.clone().move_iter().zip(args.move_iter()) {
+	for ((uid, node), arg) in g.nodes.clone().move_iter().zip(args.move_iter()) {
 		let mut rxers: Vec<~str> = vec!();
 		let mut txers: Vec<~str> = vec!();
-		for edge in y.edges.iter() {
+		for edge in g.edges.iter() {
 			if &uid == edge.get(0) {
 				txers.push("tx".to_owned().append(edge.get(0).slice_from(0)).append(edge.get(1).slice_from(0)));
 			}
@@ -141,8 +140,14 @@ fn main () {
 
 	channelStmts.push_all_move(spawnExprs.move_iter().map(|x| stmt_semi(x)).collect());
 
-	let function = fn_item(y.name, vec!(), ty_nil(), block(channelStmts, None));
+	fn_item(g.name, vec!(), ty_nil(), block(channelStmts, None))
+}
 
+fn main () {
+	let forest: Vec<(Graph, Vec<json::Json>)> = getGraph();
 	println!("{}", File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap());
-	println!("{}", syntax::print::pprust::item_to_str(&function));
+	let o: Vec<~str> = forest.move_iter().map(|(x,y)| genFunction(x,y)).map(|z| syntax::print::pprust::item_to_str(&z)).collect();
+	for f in o.iter() {
+		println!("{}", f);
+	}
 }
