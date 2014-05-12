@@ -136,7 +136,6 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 					spawnExprs.push(spawn(~"fork",
 						vec!(expr_path(frx), expr_owned_vec(txers.iter().map(
 							|x| expr_path(x.slice_from(0))).collect()))));
-					println!("{}", (&io, &ftx, &txers));
 						channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.clone()),
 							pat_name(frx.clone()))), expr_call(expr_path("channel"), vec!())));
 					argv.push(expr_path(ftx))
