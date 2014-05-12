@@ -28,6 +28,13 @@ pub fn path(name: &str, ty: Option<ast::Ty_>) -> ast::Path {
 	}
 }
 
+pub fn arg(e: &str, n: &str) -> ast::Arg {
+	ast::Arg { ty: ty_path(n),
+		pat: pat_name(e),
+		id: 0
+	}
+}
+
 pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: ast::P<ast::Ty>, block: ast::P<ast::Block>) -> ast::Item{
 	let decl = ast::FnDecl {
 		inputs: inputs,
@@ -117,7 +124,6 @@ pub fn pat(p: ast::Pat_) -> P<ast::Pat> {
 	})
 }
 
-
 pub fn pat_name(name: &str) -> P<ast::Pat> {
 	pat(ast::PatIdent(ast::BindByValue(ast::MutImmutable), path(name, None), None))
 }
@@ -146,6 +152,14 @@ pub fn ty_nil() -> P<ast::Ty> {
 	P(ast::Ty {
 		id: 0,
 		node: ast::TyNil,
+		span: codemap::DUMMY_SP
+	})
+}
+
+pub fn ty_path(e: &str) -> P<ast::Ty> {
+	P(ast::Ty {
+		id: 0,
+		node: ast::TyPath(path(e, None),None,0),
 		span: codemap::DUMMY_SP
 	})
 }

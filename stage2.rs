@@ -21,6 +21,7 @@ struct Graph {
 	edges: Vec<Vec<~str>>,
 	nodes: Vec<(~str, Node)>,
 	name: ~str,
+	args: Option<Vec<~str>>,
 	inrx: bool,
 	outtx: bool,
 }
@@ -78,6 +79,7 @@ fn getGraph() -> Vec<(Graph, Vec<json::Json>)> {
 fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 	let mut channelStmts: Vec<ast::P<ast::Stmt>> = vec!();
 	let mut spawnExprs: Vec<ast::P<ast::Expr>> = vec!();
+	let mut fnargv: Vec<ast::Arg> = vec!();
 	// this does the work - iterate over nodes and arguments
 	for ((uid, node), arg) in g.nodes.clone().move_iter().zip(args.move_iter()) {
 		let mut rxers: Vec<~str> = vec!();
@@ -128,19 +130,26 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 				None => vec!()
 			}
 		);
-
-		spawnExprs.push(spawn(n, argv));
-
-		txers.iter().map(|txer| {
-			let dstrm = (~"r").append((*txer).slice_from(1));
-			channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(*txer),
-				pat_name(dstrm))), expr_call(expr_path("channel"), vec!())))
-		}).last();
+		match n.slice_from(0) {
+			"in" => {fnargv.push(abstrast::arg((~"r").append(txers.get(0).slice_from(1)), "Receiver<f32>"))}
+			"out" => {fnargv.push(abstrast::arg((~"t").append(rxers.get(0).slice_from(1)), "Sender<f32>"))}
+			_ => {
+			spawnExprs.push(spawn(n, argv));
+			txers.iter().map(|txer| {
+				let dstrm = (~"r").append((*txer).slice_from(1));
+				channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(*txer),
+					pat_name(dstrm))), expr_call(expr_path("channel"), vec!())))
+			}).last();
+		}
+		};
 	}
 
 	channelStmts.push_all_move(spawnExprs.move_iter().map(|x| stmt_semi(x)).collect());
-
-	fn_item(g.name, vec!(), ty_nil(), block(channelStmts, None))
+	match g.args {
+		Some(ref aargs) => {aargs.iter().map(|x| fnargv.push(abstrast::arg(x.slice_from(0), "f32"))).last();},
+		None => ()
+	};
+	fn_item(g.name, fnargv, ty_nil(), block(channelStmts, None))
 }
 
 fn main () {

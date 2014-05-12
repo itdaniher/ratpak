@@ -1,3 +1,11 @@
+=> biquaddf1 (a0, a1, a2, b0, b1, b2) =>
+	in
+	/+ @oc @od
+	^ Z *b0
+	(^ Z *a1 *b1) (/+ @oa @ob)
+	(^ *a2 *b2) @xc @xa out
+	@xd @xb
+
 main
 	rtlSourceCmplx (4339e5, 200, 256e3)
 	^ (,&'|x|{x.norm().abs()}') fft (512, 0)
@@ -16,19 +24,4 @@ main
 	differentiator
 	&'|x| {(time::get_time().sec, x)}'
 	printSink
-
-main
-	!'|x|{x}' @o12
-	&'|x| {~"d"}'
-	&getCode
-	bitsToPackets
-	spawnBytestream 'false'
-	differentiator
-	&'|x|{bitv::from_bytes(x.as_slice())}'
-	?'|x,y|{x.map(|a| a.iter().map(|b| y.send(b as uint)).last()).last();()}'
-	&'|x|{x as f32}'
-	+@o2 @o3 @o4
-	^ (Z) (&'|x| -> bool { return x > 500 }')
-	^ (+@x2) (* -5e-4) differentiator
-	@0 +@x3 !@x12
 

@@ -29,8 +29,8 @@ jQuery.fn.springy = function(params) {
 	var graph = this.graph = params.graph || new Springy.Graph();
 	var nodeFont = "16px Verdana, sans-serif";
 	var edgeFont = "8px Verdana, sans-serif";
-	var stiffness = params.stiffness || 400.0;
-	var repulsion = params.repulsion || 400.0;
+	var stiffness = params.stiffness || 40.0;
+	var repulsion = params.repulsion || 40.0;
 	var damping = params.damping || 0.5;
 	var nodeSelected = params.nodeSelected || null;
 	var nodeImages = {};

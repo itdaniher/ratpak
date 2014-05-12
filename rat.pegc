@@ -8,7 +8,7 @@ start =
 	n: network+ { n }
 
 proto =
-	p: name {@start = line(); p}
+	p: name {p}
 
 argless =
 	[%]
@@ -20,7 +20,8 @@ name =
 	/ aname
 
 aname =
-	a: $([\-a-zA-Z]+[0-9]*)
+	(a: $("-"?[a-zA-Z]+[0-9]*)) ", " {a}
+	/ a: $([\-a-zA-Z]+[0-9]*)
 	/ a: $("-"?[a-zA-Z]+[0-9]*)
 
 float =
@@ -77,5 +78,6 @@ line =
 	"\t" " "* ea:(expr " "?)+ "\n"{@row = 0; @_.without(@_.flatten(ea), null, " ")}
 
 network =
-	i:"=>"? " "? id:proto " "? o:"=>"? "\n" lines:line+ "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "lines": lines}}
+	i:"=>"? " "? id:proto " "? "(" " "? a:aname+ " "? ")" " "? o:"=>"? "\n" lines:line+ "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "lines": lines, "args": a}}
+	/ i:"=>"? " "? id:proto " "? o:"=>"? "\n" lines:line+ "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "lines": lines, "args": []}}
 

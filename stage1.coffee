@@ -14,11 +14,6 @@ b = v[i]
 uidgen = (a) ->
 	("00"+a.y).slice(-3) + ("00"+a.x).slice(-3)
 
-exprs = _.flatten(b["lines"])
-nodes = exprs.map (p) ->
-	label = if p.args.length == 0 then p.proc else if p.args.length == 1 then p.proc + "(" + p.args[0] + ")" else p.proc + "(" + (JSON.stringify p.args) + ")"
-	[uidgen(p), {pname: p.proc, label: label, args:p.args}]
-
 getEdgesTo = (n, g) ->
 	out = []
 	ny = n.y-1
@@ -40,11 +35,18 @@ getEdgesTo = (n, g) ->
 			console.error([n, h, [nx,ny]])
 	out
 
-edges = exprs.map((d)->getEdgesTo(d, exprs)).filter((x) -> x?).reduce(((x,y) -> x.concat(y)), []).filter((x) -> x != undefined)
+outText = v.map((b) ->
+	exprs = _.flatten(b["lines"])
+	nodes = exprs.map (p) ->
+		label = if p.args.length == 0 then p.proc else if p.args.length == 1 then p.proc + "(" + p.args[0] + ")" else p.proc + "(" + (JSON.stringify p.args) + ")"
+		[uidgen(p), {pname: p.proc, label: label, args:p.args}]
+	
+	edges = exprs.map((d)->getEdgesTo(d, exprs)).filter((x) -> x?).reduce(((x,y) -> x.concat(y)), []).filter((x) -> x != undefined)
 
-dropMe = nodes.filter((x) -> x[1].pname == "").filter((x) -> x?).map((x) -> x[0])
-edges = edges.filter((y) -> ((dropMe.lastIndexOf(y[0]) < 0) and (dropMe.lastIndexOf(y[1]) < 0)))
-nodes = nodes.filter((x) -> _.flatten(edges).lastIndexOf(x[0]) > -1)
+	dropMe = nodes.filter((x) -> x[1].pname == "").filter((x) -> x?).map((x) -> x[0])
+	edges = edges.filter((y) -> ((dropMe.lastIndexOf(y[0]) < 0) and (dropMe.lastIndexOf(y[1]) < 0)))
+	nodes = nodes.filter((x) -> _.flatten(edges).lastIndexOf(x[0]) > -1)
 
-outText = JSON.stringify({"edges": edges, "nodes": nodes, "name":b.name, "inrx":b.in, "outtx":b.out, "consts":b.const}, null, 2)
-console.log outText
+	{"edges": edges, "nodes": nodes, "name":b.name, "inrx":b.in, "outtx":b.out, "consts":b.const, "args": b.args})
+
+console.log JSON.stringify(outText, null, 2)
