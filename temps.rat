@@ -1,4 +1,4 @@
-=> biquaddf1 (a0, a1, a2, b0, b1, b2) =>
+=> biquaddf2 (a0, a1, a2, b0, b1, b2) =>
 	in
 	/+ @oc @od
 	^ Z *b0
@@ -6,7 +6,18 @@
 	(^ *a2 *b2) @xc @xa out
 	@xd @xb
 
+sinTest (k) =>
+	/+ @oa @ob
+	Z '-1f32'
+	(^ Z '1f32' *k out)
+	(*'-1f32') (@xb)
+	@xa
+
 main
+	sinTest '(0.1f32).sin()'
+	printSink
+
+main2
 	rtlSourceCmplx (4339e5, 200, 256e3)
 	^ (,&'|x|{x.norm().abs()}') fft (512, 0)
 	(trigger) (,&'|x|{x.norm().abs()}')
