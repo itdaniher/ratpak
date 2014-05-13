@@ -15,7 +15,8 @@ argless =
 
 name =
 	$("," name)
-	/ [*+?%&!$]
+	/ $("/" name)
+	/ [~*+?%&!$]
 	/ [A-Z]
 	/ aname
 
@@ -53,8 +54,7 @@ args =
 
 modif =
 	" "? op:"^" " " {op}
-	/ op:"/" {op}
-
+	/ " "? op:"/" " " {op}
 proc =
 	" "? "(" " "? p:proc " "? ")" " "? {p}
 	/ n: argless { @row += 1;{"proc": n, "y":line() - @start, "x":@row, "refs":[], "args": []}}
