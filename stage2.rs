@@ -28,33 +28,33 @@ struct Graph {
 
 fn expandPrim(nodepname: ~str) -> ~str {
 	match nodepname.char_at(0) {
-		'*' => ~"mulAcross",
-		'+' => ~"sumAcross",
+		'*' => ~"mul",
+		'+' => ~"sum",
 		'Z' => ~"delay",
 		'%' => ~"grapes",
 		'B' => ~"binconv",
 		'V' => ~"vec",
 		'$' => ~"shaper",
+		'~' => ~"softSource",
 		'?' => ~"matcher",
 		'&' => ~"crossApplicator",
 		'!' => ~"applicator",
+		'/' => expandPrim(nodepname.slice_from(1).to_owned()).append("Across"),
 		',' => expandPrim(nodepname.slice_from(1).to_owned()).append("Vecs"),
 		 _  => nodepname
 	}
 }
 
 fn getDefaultArgs(nodepname: ~str) -> ~str {
+	println!("//nodepname: {}", nodepname);
 	match nodepname.len() {
-		1 => match nodepname.char_at(0) {
+		1..3 => match nodepname.char_at(0) {
 			'*' => ~"1.0f32",
 			'+' | 'Z' => ~"0.0f32",
 			'?' => ~"|a, b| {a.map(|x| {match x {Some(y) => b.send(y), None => ()}}).last();()}",
+			'/' => getDefaultArgs(nodepname.slice_from(1).to_owned()),
+			',' => "range(0,512).map(|_| ".to_owned().append(getDefaultArgs(nodepname.slice_from(1).to_owned())).append(").collect()"),
 			_ => ~"",
-		},
-		2 => match (nodepname.char_at(0), nodepname.char_at(1)) {
-			(',', x) => "range(0,512).map(|_| ".to_owned()
-				.append(getDefaultArgs(std::str::from_char(x))).append(").collect()"),
-			_ => ~""
 		},
 		_ => ~""
 	}
