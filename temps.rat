@@ -6,23 +6,44 @@
 	(^ *a2 *b2) @xc @xa out
 	@xd @xb
 
-sinTest (k) =>
+biquadOsc (k) =>
 	/+ @oa @ob
 	Z '-1f32'
 	(^ Z '1f32' *k out)
 	(*'-1f32') (@xb)
 	@xa
 
+digitalWaveguide (c) =>
+	Z '1f32' @oa
+	^ (/+ @0 @of) (@xb)
+	* c
+	^ (/+ @0 @ob) (@xd)
+	(Z '-1f32')
+	^ (* '-1f32') @xf
+	/+ @0 @od
+	^ (out) (@xa)
+
+agwn =>
+	~'|v: Sender<f32>|{loop{let Closed01(val) = random::<Closed01<f32>>();v.send(val)}}'
+	out
+
+brown =>
+	agwn
+	* '2f32'
+	/+ '-1f32' @0 @oa
+	(^ (Z) out)
+	@xa
+
 main
-	sinTest '(0.1f32).sin()'
-	printSink
+	digitalWaveguide '(6.28f32*1e3/96e3).cos()'
+	vidSink 500
 
 main2
 	rtlSourceCmplx (4339e5, 200, 256e3)
 	^ (,&'|x|{x.norm().abs()}') fft (512, 0)
 	(trigger) (,&'|x|{x.norm().abs()}')
-	(discretize) ,+@oa @ob
-	rle ^ (,Z) vidSink
+	(discretize) ,/+@oa @ob
+	rle ^ (,Z) ,vidSink
 	dle 256e3 ^ @xa ,* 'vec([-5e-4f32,..512])'
 	(^ (?'|mut a,b| {a.map(|x| {match x { (1, 2e-4..6e-4) => match a.next().unwrap() { (0, 1.5e-3..2.5e-3) => b.send(Some(0u)), (0, 3.5e-3..4.5e-3) => b.send(Some(1u)), _ => b.send(None)}, _ => b.send(None)}}).last();()}') (?'|mut a,b| {a.map(|x| {match x {(1, ref d@125e-6..250e-6) | (1, ref d @500e-6..650e-6) => {match a.next().unwrap() {(0, ref e @500e-6..650e-6) | (0, ref e@125e-6..250e-6) => b.send(Some(if d > e {1u} else {0u})),_ => b.send(None)}}, _ => b.send(None)}}).last();()}')) @0 @xb
 	$36 $24
