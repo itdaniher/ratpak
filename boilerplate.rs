@@ -11,6 +11,7 @@ extern crate dsputils;
 extern crate time;
 extern crate oblw;
 extern crate outlet;
+extern crate rand;
 
 
 use kissfft::fft;
@@ -22,8 +23,8 @@ use vidsink2::*;
 use outlet::*;
 use native::task;
 use num::complex;
+use rand::{random, Closed01};
 use std::comm::{Receiver, Sender, channel, Messages};
 use std::num;
 use std::vec;
-
 
