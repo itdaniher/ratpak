@@ -100,7 +100,7 @@ Process in RatPak can also be inlined as Rust lambda expressions of an appropria
 |Messages<T>, Sender<U>|
 ```
 
-These options allow a developer to specify terse transformations of homogenous and heterogenous type, as well as terse relationships between an object representing the infinite list of input tokens and an output stream. Of these three options and their variants, only the third allows local state between successive tokens, making it of significant use in parsing. Note that the third structure should never terminate. This third option is often used in conjunction with Rust [iterator-style manipulations](http://static.rust-lang.org/doc/master/core/iter/trait.Iterator.html). Inlined Rust expressions are surrounded in single quotes `'` and prefaced by an exclaimation mark `!` for the homogenously typed case, an ampersand `&` for the heterogenously typed case, or a question mark `?` for the nonterminating process definition.
+These options allow a developer to specify terse transformations of homogenous and heterogenous type, as well as terse relationships between an object representing the infinite list of input tokens and an output stream. Of these three options and their variants, only the third allows local state between successive tokens, making it of significant use in parsing. Note that the third structure should never terminate. This third option is often used in conjunction with Rust [iterator-style manipulations](http://static.rust-lang.org/doc/master/core/iter/trait.Iterator.html). Inlined Rust expressions are surrounded in single quotes `'` and prefaced by an exclaimation mark `!` for the homogenously typed case, an ampersand `&` for the heterogenously typed case, or a left curly bracket `{` for the nonterminating process definition.
 
 The terminating expressions can be modified by a prepended comma `,` to indicate the application of the method across a vector.
 
@@ -112,6 +112,5 @@ The unit delay `Z` first sends a zero `0` then passes input to output. In feedba
 
 A binary converter `B` accepts a list of field widths and a stream of sequences of binary values and returns a sequence of integer values, each composed of its respective number of bits.
 
-The shaper function `$` accepts an integer argument `l` and a stream of Option<T>, returning a stream of Vec<T>, each token of length `l`. Tokens are accumulated until there are `l` sequential tokens of Some(T) followed by a None value. When this pattern occurs, the resulting sequence Vec<T> is sent and reset. If a None token is received before the l'th Some(T) token, Vec<T> is reset.
-
+The shaper function `$` accepts an integer argument `l` and a stream of `T`, returning a stream of `Vec<T>`, each token of length `l`. Tokens are accumulated until there are `l` sequential tokens of `T`. The resulting sequence `Vec<T>` is sent and reset. The shaper function can be modified by a prepended comma `,` to translate from `Vec<T>` to `T`. It can be prepended by the question mark `?` to operate upon an input stream of `Option<T>`, accumulating until it has a vec of `l` tokens followed by a `None`.
 
