@@ -14,11 +14,11 @@ biquadOsc (k) =>
 	@xa
 
 digitalWaveguide (c) =>
-	Z '1f32' @oa
+	Z @oa
 	^ (/+ @0 @of) (@xb)
 	* c
 	^ (/+ @0 @ob) (@xd)
-	(Z '-1f32')
+	(Z '1f32')
 	^ (* '-1f32') @xf
 	/+ @0 @od
 	^ (out) (@xa)
