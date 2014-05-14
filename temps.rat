@@ -1,4 +1,4 @@
-=> biquaddf2 (a0, a1, a2, b0, b1, b2) =>
+=> biquaddf2 (a1, a2, b0, b1, b2) =>
 	in
 	/+ @oc @od
 	^ Z *b0
@@ -34,9 +34,19 @@ brown =>
 	(^ (Z) out)
 	@xa
 
-main
-	digitalWaveguide '(6.28f32*1e3/96e3).cos()'
-	vidSink 500
+main =>
+	digitalWaveguide '(6.28f32 * 1e3/48e3f32).cos()'
+	vidSink 512
+
+audioFilter
+	pulseSource 48000, 512
+	?'|mut a, b| {for c in a { for d in c.iter() { b.send(d.clone()) } } }'
+	biquaddf2 '0.9427615784986199', '-0.33326621039701554', '0.5690069472239089', '-1.1380138944478178', '0.5690069472239089'
+	?'|mut a: Messages<f32>, b: Sender<Vec<f32>>|{loop{b.send(range(0,512).map(|_| a.next().unwrap()).collect())}}'
+	,&'|x|{complex::Cmplx::new(*x, 0f32)}'
+	fft 512, 0
+	,&'|x|{x.norm().abs()}'
+	,vidSink
 
 main2
 	rtlSourceCmplx (4339e5, 200, 256e3)
