@@ -16,7 +16,8 @@ argless =
 name =
 	$("," name)
 	/ $("/" name)
-	/ [~*+?%&!$]
+	/ [~*+%&!${]
+	/ $("?" name)
 	/ [A-Z]
 	/ aname
 

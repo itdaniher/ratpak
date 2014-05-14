@@ -36,9 +36,10 @@ fn expandPrim(nodepname: ~str) -> ~str {
 		'V' => ~"vec",
 		'$' => ~"shaper",
 		'~' => ~"softSource",
-		'?' => ~"matcher",
+		'{' => ~"looper",
 		'&' => ~"crossApplicator",
 		'!' => ~"applicator",
+		'?' => expandPrim(nodepname.slice_from(1).to_owned()).append("Optional"),
 		'/' => expandPrim(nodepname.slice_from(1).to_owned()).append("Across"),
 		',' => expandPrim(nodepname.slice_from(1).to_owned()).append("Vecs"),
 		 _  => nodepname
@@ -50,9 +51,12 @@ fn getDefaultArgs(nodepname: ~str) -> ~str {
 		1..3 => match nodepname.char_at(0) {
 			'*' => ~"1.0f32",
 			'+' | 'Z' => ~"0.0f32",
-			'?' => ~"|a, b| {a.map(|x| {match x {Some(y) => b.send(y), None => ()}}).last();()}",
 			'/' => getDefaultArgs(nodepname.slice_from(1).to_owned()),
-			',' => "range(0,512).map(|_| ".to_owned().append(getDefaultArgs(nodepname.slice_from(1).to_owned())).append(").collect()"),
+			',' => { match getDefaultArgs(nodepname.slice_from(1).to_owned()).as_slice() {
+					"" => ~"",
+					x => "range(0,512).map(|_| ".to_owned().append(x.to_owned()).append(").collect()")
+				}
+			}
 			_ => ~"",
 		},
 		_ => ~""
