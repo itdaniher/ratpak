@@ -12,11 +12,12 @@ extern crate time;
 extern crate oblw;
 extern crate outlet;
 extern crate rand;
-
+extern crate pasimple;
 
 use kissfft::fft;
 use collections::bitv;
 use rtlsdr::*;
+use pasimple::*;
 use kpn::*;
 use bitfount::*;
 use vidsink2::*;
