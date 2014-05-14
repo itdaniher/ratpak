@@ -55,6 +55,7 @@ args =
 modif =
 	" "? op:"^" " " {op}
 	/ " "? op:"/" " " {op}
+
 proc =
 	" "? "(" " "? p:proc " "? ")" " "? {p}
 	/ n: argless { @row += 1;{"proc": n, "y":line() - @start, "x":@row, "refs":[], "args": []}}
@@ -67,6 +68,7 @@ proc =
 expr =
 	" "? "(" " "? e:expr " "? ")" " "? {e}
 	/ p: proc {p}
+	/ "#" [^#] "#" {}
 	/ d: modif  rp:(proc " "?)+ {
 		if d != "/"
 			@_.union rp[0][0], (@_.extend(p[0], {"modif":d}) for p in rp when (rp.indexOf p) > 0)
@@ -80,4 +82,5 @@ line =
 network =
 	i:"=>"? " "? id:proto " "? "(" " "? a:aname+ " "? ")" " "? o:"=>"? "\n" lines:line+ "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "lines": lines, "args": a}}
 	/ i:"=>"? " "? id:proto " "? o:"=>"? "\n" lines:line+ "\n" {{"name": id, "in":(i == "=>"), "out": (o == "=>"), "lines": lines, "args": []}}
+	/ "#" [^#]+ "#\n\n"{}
 

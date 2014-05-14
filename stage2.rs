@@ -46,7 +46,6 @@ fn expandPrim(nodepname: ~str) -> ~str {
 }
 
 fn getDefaultArgs(nodepname: ~str) -> ~str {
-	println!("//nodepname: {}", nodepname);
 	match nodepname.len() {
 		1..3 => match nodepname.char_at(0) {
 			'*' => ~"1.0f32",
