@@ -19,6 +19,7 @@ use collections::bitv;
 use rtlsdr::*;
 use pasimple::*;
 use kpn::*;
+use oblw::*;
 use bitfount::*;
 use vidsink2::*;
 use outlet::*;
