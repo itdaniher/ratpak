@@ -1,12 +1,12 @@
 ## Introduction
 
-RatPak is a declarative language for defining graphs of interconnected processes. Such graphs are invaluable when working to describe manipulations on streams of information, like those produced by sampling analog values in the real world. Directed graphs are capable of concisely describing discrete time signal processing algorithms and the successive transformations associated with demodulating and decoding mixed-domain communication protocols. As RatPak compiles to Rust source code which benefits from LLVM's extensive set of optimizations and Rust's excellent concurrency primitives, a RatPak flowgraph can directly produce a corresponding optimized Linux executable. RatPak has been routinely used to describe flowgraphs spanning dozens of OS threads performing moderately complex digital signal processing manipulations on millions of samples per second, live.
+RatPak is a declarative language for defining graphs of interconnected processes, interacting according to the [Kahn Process Network](http://itdaniher.com/static/Daniher-KPN.pdf) paradigm. Such graphs are invaluable when describing manipulations on streams of information, like those produced by sampling analog values in the real world. Directed graphs are capable of concisely describing discrete time signal processing algorithms and the successive transformations associated with demodulating and decoding mixed-domain communication protocols. As RatPak compiles to Rust source code (example [here](http://itdaniher.com/static/stage3.rs), which benefits from LLVM's extensive optimizations and Rust's excellent concurrency primitives, a RatPak flowgraph definition can directly produce a corresponding efficient Linux executable. RatPak has been routinely used to describe flowgraphs spanning dozens of OS threads performing complex signal manipulations on millions of samples per second, with milliseconds of latency.
 
-A RatPak flowgraph builds off of an ASCII representation of a directed tree to include syntax for describing connections, as well as syntax for describing processes. RatPak offers a set of useful stream manipulations as builtins (defined in boilerplate.rs,) and is well complemented by the array of functionality of [LibRedio]().
+A RatPak flowgraph builds off of an ASCII representation of a directed tree to include syntax for describing connections, as well as syntax for describing processes. RatPak offers a set of useful stream manipulations as builtins (defined in boilerplate.rs,) and is well complemented by the array of functionality of [LibRedio](https://github.com/ade-ma/LibRedio).
 
 ## Semantics
 
-The trivial case of a flowgraph contains two elements, a source (process producing a stream) and a sink (process accepting a stream.) This can be trivially extended to yield arbitrarily long one-dimensional sequences starting with a source, ending with a sink, with an arbitrary number of processing nodes each accepting and producing exactly one stream.
+The trivial case of a flowgraph contains two elements, a source (process producing a stream) and a sink (process accepting a stream.) This can be extended to yield arbitrarily long one-dimensional sequences starting with a source, ending with a sink, with a number of processing nodes each accepting and transmitting exactly one stream.
 
 In RatPak, this looks like:
 
@@ -84,6 +84,9 @@ main
 
 ![alt text](http://itdaniher.com/static/clips/1plpf.png "rendered block diagram")
 
+### Reduction Across Streams
+
+In the previous sections, the forward slash `/` was used to preface the summation and multiplication operators to indicate that the application reduces the dimensionality from two (or more) input stream to exactly one output stream. This syntax allows the concise definition of arbitrarily complex summation and multiplication nodes.
 
 ## Processes
 
@@ -128,7 +131,7 @@ The terminating expressions can be modified by a prepended comma `,` to indicate
 
 There are also a set of builtin processes useful for common activities in RatPak.
 
-The unit delay `Z` first sends a zero `0` then passes input to output. In feedback this acts as a unit delay shifting a stream against itself, and can be used to build filters and oscillators.
+The unit delay `Z` first sends a zero `0` then passes input to output. In feedback this acts as a unit delay shifting a stream against itself, and can be used to build filters and oscillators. It accepts an optional argument for the first value, facilitating nontrivial cases and allowing the concise implementation of well-definied initial conditions.
 
 A binary converter `B` accepts a list of field widths and a stream of sequences of binary values and returns a sequence of integer values, each composed of its respective number of bits.
 
