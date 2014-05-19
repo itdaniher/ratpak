@@ -1,3 +1,8 @@
+# Rust Version
+
+> rustc 0.11-pre (ade02bb 2014-04-26 06:46:24 -0700)
+
+
 ## Introduction
 
 RatPak is a declarative language for defining graphs of interconnected processes, interacting according to the [Kahn Process Network](http://itdaniher.com/static/Daniher-KPN.pdf) paradigm. Such graphs are invaluable when describing manipulations on streams of information, like those produced by sampling analog values in the real world. Directed graphs are capable of concisely describing discrete time signal processing algorithms and the successive transformations associated with demodulating and decoding mixed-domain communication protocols. As RatPak compiles to Rust source code (example [here](http://itdaniher.com/static/stage3.rs), which benefits from LLVM's extensive optimizations and Rust's excellent concurrency primitives, a RatPak flowgraph definition can directly produce a corresponding efficient Linux executable. RatPak has been routinely used to describe flowgraphs spanning dozens of OS threads performing complex signal manipulations on millions of samples per second, with milliseconds of latency.
