@@ -98,10 +98,10 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 		let mut txers: Vec<StrBuf> = vec!();
 		let n = expandPrim(node.pname.clone());
 		for &(ref e0, ref e1) in g.edges.iter() {
-			if node.uid == e0 {
+			if &node.uid == e0 {
 				txers.push("tx".to_strbuf().append(e0.as_slice()).append(e1.as_slice()));
 			}
-			else if node.uid == e1 {
+			else if &node.uid == e1 {
 				rxers.push("rx".to_strbuf().append(e0.as_slice()).append(e1.as_slice()));
 			}
 		}
@@ -123,11 +123,11 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 		let mut rxers: Vec<StrBuf> = vec!();
 		let mut txers: Vec<StrBuf> = vec!();
 		for &(ref e0, ref e1) in g.edges.iter() {
-			if node.uid == e0 {
+			if &node.uid == e0 {
 				let ename = "tx".to_strbuf().append(e0.as_slice()).append(e1.as_slice());
 				txers.push(ename);
 			}
-			else if node.uid == e1 {
+			else if &node.uid == e1 {
 				rxers.push("rx".to_strbuf().append(e0.as_slice()).append(e1.as_slice()));
 			}
 		}
