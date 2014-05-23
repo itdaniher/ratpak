@@ -35,7 +35,7 @@ brown =>
 	(^ (Z) out)
 	@xa
 
-main
+#main2
 	pulseSource 8000, 512
 	,$
 	biquaddf2 '0.9427615784986199', '-0.33326621039701554', '0.5690069472239089', '-1.1380138944478178', '0.5690069472239089'
@@ -45,7 +45,7 @@ main
 	,&'|x|{x.norm()}'
 	,vidSink
 
-#=> spectrogram
+=> spectrogram
 	in
 	fft 512, 0
 	,& '|x|{x.norm().abs()}'
@@ -56,11 +56,25 @@ main
 
 scratchpad
 	digitalWaveguide '(6.28f32 * 1e3/48e3f32).cos()'
-	vidSink 512#
+	vidSink 512
 
-sproutwave
-	rtlSourceCmplx (4339e5, 200, 256e3)
-	(,&'|x|{x.norm()}')
+output
+	&'|x| {"d"}' @oa
+	&getCode
+	bitsToPackets
+	spawnBytestream 'false'
+	differentiator
+	&'|x|{bitv::from_bytes(x.as_slice())}'
+	{'|x,y|{x.map(|a| a.iter().map(|b| y.send(b as uint)).last()).last();()}'
+	&'|x|{x as f32}'
+	(/+ @ob @oc)
+	^ (Z) (&'|x| -> bool { return x > 500f32 }')
+	(^ (@xb) (* -5e-4)) differentiator
+	(@0) (@xc) (@xa)#
+
+main
+	rtlSourceCmplx (4339e5, 402, 256e3)
+	^ (,&'|x|{x.norm()}')
 	trigger
 	discretize
 	rle
@@ -76,19 +90,4 @@ sproutwave
 	differentiator
 	&'|x| {(time::get_time().sec, x)}'
 	printSink
-
-output
-	!'|x|{x}' @oa
-	&'|x| {~"d"}'
-	&getCode
-	bitsToPackets
-	spawnBytestream 'false'
-	differentiator
-	&'|x|{bitv::from_bytes(x.as_slice())}'
-	{'|x,y|{x.map(|a| a.iter().map(|b| y.send(b as uint)).last()).last();()}'
-	&'|x|{x as f32}'
-	(/+ @ob @oc)
-	^ (Z) (&'|x| -> bool { return x > 500f32 }')
-	(^ (@xb) (* -5e-4)) differentiator
-	(@0) (@xc) (@xa)
 

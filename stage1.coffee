@@ -39,13 +39,13 @@ outText = v.map((b) ->
 	exprs = _.flatten(b["lines"])
 	nodes = exprs.map (p) ->
 		label = if p.args.length == 0 then p.proc else if p.args.length == 1 then p.proc + "(" + p.args[0] + ")" else p.proc + "(" + (JSON.stringify p.args) + ")"
-		[uidgen(p), {pname: p.proc, label: label, args:p.args}]
+		{pname: p.proc, label: label, args:p.args, uid: uidgen(p)}
 	
 	edges = exprs.map((d)->getEdgesTo(d, exprs)).filter((x) -> x?).reduce(((x,y) -> x.concat(y)), []).filter((x) -> x != undefined)
 
-	dropMe = nodes.filter((x) -> x[1].pname == "").filter((x) -> x?).map((x) -> x[0])
+	dropMe = nodes.filter((x) -> x.pname == "").filter((x) -> x?).map((x) -> x[0])
 	edges = edges.filter((y) -> ((dropMe.lastIndexOf(y[0]) < 0) and (dropMe.lastIndexOf(y[1]) < 0)))
-	nodes = nodes.filter((x) -> _.flatten(edges).lastIndexOf(x[0]) > -1)
+	nodes = nodes.filter((x) -> _.flatten(edges).lastIndexOf(x.uid) > -1)
 
 	{"edges": edges, "nodes": nodes, "name":b.name, "inrx":b.in, "outtx":b.out, "consts":b.const, "args": b.args})
 

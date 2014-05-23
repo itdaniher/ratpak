@@ -1,10 +1,12 @@
+CC=~/projects/rust/x86_64-unknown-linux-gnu/stage2/bin/rustc
+
 all: stage3.rs
 
 libabstrast*.so:
-	rustc --crate-type=dylib abstrast.rs
+	$(CC) --crate-type=dylib abstrast.rs
 
 stage2: libabstrast*.so
-	rustc -L./ stage2.rs
+	$(CC) -L./ stage2.rs
 
 stage3.rs: stage2
 	rm -f stage2.json
@@ -12,7 +14,7 @@ stage3.rs: stage2
 	./stage2 > stage3.rs
 
 stage3: stage3.rs
-	rustc -O -L../lib/ stage3.rs
+	$(CC) -O -L../lib/ stage3.rs
 
 clean:
 	rm -f stage2 stage3 stage2.json stage3.rs

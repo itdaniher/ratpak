@@ -4,6 +4,7 @@ extern crate serialize;
 extern crate syntax;
 extern crate abstrast;
 
+use std::strbuf::StrBuf;
 use std::io::File;
 use std::path::Path;
 use abstrast::*;
@@ -12,65 +13,72 @@ use serialize::{json, Encodable, Decodable};
 
 #[deriving(Decodable,Encodable,Clone)]
 struct Node {
-	pname: ~str
+	pname: StrBuf,
+	uid: StrBuf
 }
 
 // naive graph format
 #[deriving(Decodable,Encodable)]
 struct Graph {
-	edges: Vec<Vec<~str>>,
-	nodes: Vec<(~str, Node)>,
-	name: ~str,
-	args: Option<Vec<~str>>,
+	edges: Vec<Vec<StrBuf>>,
+	nodes: Vec<Node>,
+	name: StrBuf,
+	args: Option<Vec<StrBuf>>,
 	inrx: bool,
 	outtx: bool,
 }
 
-fn expandPrim(nodepname: ~str) -> ~str {
-	match nodepname.char_at(0) {
-		'*' => ~"mul",
-		'+' => ~"sum",
-		'Z' => ~"delay",
-		'%' => ~"grapes",
-		'B' => ~"binconv",
-		'V' => ~"vec",
-		'$' => ~"shaper",
-		'~' => ~"softSource",
-		'{' => ~"looper",
-		'&' => ~"crossApplicator",
-		'!' => ~"applicator",
-		'?' => expandPrim(nodepname.slice_from(1).to_owned()).append("Optional"),
-		'/' => expandPrim(nodepname.slice_from(1).to_owned()).append("Across"),
-		',' => expandPrim(nodepname.slice_from(1).to_owned()).append("Vecs"),
-		 _  => nodepname
-	}
+fn expandPrim(nodepname: StrBuf) -> StrBuf {
+	let mut snp = nodepname.clone();
+	let c0 = snp.shift_char().unwrap();
+	let mut out: StrBuf = "".to_strbuf();
+	match c0 {
+		'*' => "mul",
+		'+' => "sum",
+		'Z' => "delay",
+		'%' => "grapes",
+		'B' => "binconv",
+		'V' => "vec",
+		'$' => "shaper",
+		'~' => "softSource",
+		'{' => "looper",
+		'&' => "crossApplicator",
+		'!' => "applicator",
+		'?' => {out = expandPrim(snp).append("Optional"); out.as_slice()},
+		'/' => {out = expandPrim(snp).append("Across"); out.as_slice()},
+		',' => {out = expandPrim(snp).append("Vecs"); out.as_slice()},
+		 _  => nodepname.as_slice()
+	}.to_strbuf()
 }
 
-fn getDefaultArgs(nodepname: ~str) -> ~str {
+fn getDefaultArgs(nodepname: StrBuf) -> StrBuf {
+	let mut snp = nodepname.clone();
+	let c0 = snp.shift_char().unwrap();
+	let mut out: StrBuf = "".to_strbuf();
 	match nodepname.len() {
-		1..3 => match nodepname.char_at(0) {
-			'*' => ~"1.0f32",
-			'+' | 'Z' => ~"0.0f32",
-			'/' => getDefaultArgs(nodepname.slice_from(1).to_owned()),
-			',' => { match getDefaultArgs(nodepname.slice_from(1).to_owned()).as_slice() {
-					"" => ~"",
-					x => "range(0,512).map(|_| ".to_owned().append(x.to_owned()).append(").collect()")
+		1..3 => match c0 {
+			'*' => "1.0f32",
+			'+' | 'Z' => "0.0f32",
+			'/' => { out = getDefaultArgs(snp); out.as_slice()}
+			',' => { match getDefaultArgs(snp).as_slice() {
+					"" => "",
+					x => {out = "range(0,512).map(|_| ".to_strbuf().append(x).append(").collect()"); out.as_slice()}
 				}
 			}
-			_ => ~"",
+			_ => "",
 		},
-		_ => ~""
-	}
+		_ => ""
+	}.to_strbuf()
 }
 
 fn getGraph() -> Vec<(Graph, Vec<json::Json>)> {
 	// get json graph and node arguments from stage2.json
 	let json_str_to_decode = File::open(&Path::new("./stage2.json")).read_to_str().unwrap();
-	let json_object = json::from_str(json_str_to_decode.to_owned()).unwrap();
+	let json_object = json::from_str(json_str_to_decode).unwrap();
 	let mut decoder = json::Decoder::new(json_object.clone());
 	// extract enum-guarded arguments from json, do not deguard
-	let args: Vec<Vec<json::Json>> = json_object.as_list().unwrap().iter().map(|x| x.search(&~"nodes").unwrap().as_list().unwrap().iter()
-		.map(|x| {x.as_list().unwrap()[1].find(&~"args").unwrap().clone()}).collect()).collect();
+	let args: Vec<Vec<json::Json>> = json_object.as_list().unwrap().iter().map(|x| x.search(&("nodes".to_strbuf())).unwrap().as_list().unwrap().iter()
+		.map(|x| {x.find(&("args".to_strbuf())).unwrap().clone()}).collect()).collect();
 	let y: Vec<Graph> = match Decodable::decode(&mut decoder) {
         Ok(v) => v,
 		Err(e) => fail!("Decoding error: {}", e)
@@ -83,65 +91,65 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 	let mut channelStmts: Vec<ast::P<ast::Stmt>> = vec!();
 	let mut spawnExprs: Vec<ast::P<ast::Expr>> = vec!();
 	let mut fnargv: Vec<ast::Arg> = vec!();
-	let mut io: Vec<~str> = vec!();
+	let mut io: Vec<StrBuf> = vec!();
 	// this does the work - iterate over nodes and arguments
-	for (uid, node) in g.nodes.clone().move_iter() {
-		let mut rxers: Vec<~str> = vec!();
-		let mut txers: Vec<~str> = vec!();
+	for node in g.nodes.clone().move_iter() {
+		let mut rxers: Vec<StrBuf> = vec!();
+		let mut txers: Vec<StrBuf> = vec!();
 		let n = expandPrim(node.pname.clone());
 		for edge in g.edges.iter() {
-			if &uid == edge.get(0) {
-				txers.push("tx".to_owned().append(edge.get(0).slice_from(0)).append(edge.get(1).slice_from(0)));
+			if &node.uid == edge.get(0) {
+				txers.push("tx".to_strbuf().append(edge.get(0).as_slice()).append(edge.get(1).as_slice()));
 			}
-			else if &uid == edge.get(1) {
-				rxers.push("rx".to_owned().append(edge.get(0).slice_from(0)).append(edge.get(1).slice_from(0)));
+			else if &node.uid == edge.get(1) {
+				rxers.push("rx".to_strbuf().append(edge.get(0).as_slice()).append(edge.get(1).as_slice()));
 			}
 		}
-		match n.slice_from(0) {
+		match n.as_slice() {
 			"in" => {
-				let x = (~"r").append(txers.get(0).slice_from(1));
+				let x = ("r").to_strbuf().append(txers.get(0).as_slice().slice_from(1));
 				io.push(x.clone());
-				fnargv.push(abstrast::arg(x, "Receiver<f32>"))
+				fnargv.push(abstrast::arg(x.as_slice(), "Receiver<f32>"))
 				}
 			"out" => {
-				let x = (~"t").append(rxers.get(0).slice_from(1));
+				let x = ("t").to_strbuf().append(rxers.get(0).as_slice().slice_from(1));
 				io.push(x.clone());
-				fnargv.push(abstrast::arg(x, "Sender<f32>"))
+				fnargv.push(abstrast::arg(x.as_slice(), "Sender<f32>"))
 				}
 			_ => {}
 		}
 	}
-	for ((uid, node), arg) in g.nodes.clone().move_iter().zip(args.move_iter()) {
-		let mut rxers: Vec<~str> = vec!();
-		let mut txers: Vec<~str> = vec!();
+	for (node, arg) in g.nodes.clone().move_iter().zip(args.move_iter()) {
+		let mut rxers: Vec<StrBuf> = vec!();
+		let mut txers: Vec<StrBuf> = vec!();
 		for edge in g.edges.iter() {
-			if &uid == edge.get(0) {
-				let ename = "tx".to_owned().append(edge.get(0).slice_from(0)).append(edge.get(1).slice_from(0));
+			if &node.uid == edge.get(0) {
+				let ename = "tx".to_strbuf().append(edge.get(0).as_slice()).append(edge.get(1).as_slice());
 				txers.push(ename);
 			}
-			else if &uid == edge.get(1) {
-				rxers.push("rx".to_owned().append(edge.get(0).slice_from(0)).append(edge.get(1).slice_from(0)));
+			else if &node.uid == edge.get(1) {
+				rxers.push("rx".to_strbuf().append(edge.get(0).as_slice()).append(edge.get(1).as_slice()));
 			}
 		}
 		let n = expandPrim(node.pname.clone());
 		let mut argv = vec!();
 		match rxers.len() {
 			0 => (),
-			1 => argv.push(expr_path(rxers.get(0).slice_from(0))),
-			_ => argv.push(expr_owned_vec(rxers.iter().map(|x| expr_path(x.slice_from(0))).collect()))
+			1 => argv.push(expr_path(rxers.get(0).as_slice())),
+			_ => argv.push(expr_owned_vec(rxers.iter().map(|x| expr_path(x.as_slice())).collect()))
 		}
 		match txers.len() {
 			0 => (),
-			1 => argv.push(expr_path(txers.get(0).slice_from(0))),
+			1 => argv.push(expr_path(txers.get(0).as_slice())),
 			_ => {
-					let ftx = txers.get(0).slice_to(13).to_str().append("0");
-					let frx = (~"r").append(ftx.slice_from(1));
-					spawnExprs.push(spawn(~"fork",
-						vec!(expr_path(frx), expr_owned_vec(txers.iter().map(
-							|x| expr_path(x.slice_from(0))).collect()))));
-						channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.clone()),
-							pat_name(frx.clone()))), expr_call(expr_path("channel"), vec!())));
-					argv.push(expr_path(ftx))
+					let ftx = txers.get(0).as_slice().slice_to(13).to_strbuf().append("0");
+					let frx = ("r").to_strbuf().append(ftx.as_slice().slice_from(1));
+					spawnExprs.push(spawn("fork",
+						vec!(expr_path(frx.as_slice()), expr_owned_vec(txers.iter().map(
+							|x| expr_path(x.as_slice())).collect()))));
+						channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.as_slice()),
+							pat_name(frx.as_slice()))), expr_call(expr_path("channel"), vec!())));
+					argv.push(expr_path(ftx.as_slice()))
 				}
 			};
 
@@ -150,9 +158,9 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 				Some(lits) => {
 					match lits {
 						ast::ExprVec(v) => if v.len() > 0 {v} else {
-						match getDefaultArgs(node.pname.clone()).slice_from(0) {
+						match getDefaultArgs(node.pname.clone()).as_slice() {
 							"" => vec!(),
-							x => vec!(parse_expr(x))
+							x => vec!(parse_expr(x.to_strbuf()))
 						}},
 						ast::ExprPath(_) | ast::ExprVstore(_, _) => vec!(expr(lits)),
 						_ => fail!("{:?}", lits)
@@ -160,16 +168,16 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 				}
 				None => vec!()
 			});
-		match n.slice_from(0) {
+		match n.as_slice() {
 			"in" => {},
 			"out" => {},
 			_ => {
-					spawnExprs.push(spawn(n, argv));
+					spawnExprs.push(spawn(n.as_slice(), argv));
 					txers.iter().map(|txer| {
-						let dstrm = (~"r").append((*txer).slice_from(1));
-						if io.clone().iter().filter(|x| x.slice_from(0) == txer.slice_from(0)).len() < 1 {
-							channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(*txer),
-								pat_name(dstrm))), expr_call(expr_path("channel"), vec!())));
+						let dstrm = ("r").to_strbuf().append(txer.as_slice().slice_from(1));
+						if io.clone().iter().filter(|x| x.as_slice() == txer.as_slice()).len() < 1 {
+							channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(txer.as_slice()),
+								pat_name(dstrm.as_slice()))), expr_call(expr_path("channel"), vec!())));
 							}
 						}).last();
 			}
@@ -177,16 +185,16 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 	};
 	channelStmts.push_all_move(spawnExprs.move_iter().map(|x| stmt_semi(x)).collect());
 	match g.args {
-		Some(ref aargs) => {aargs.iter().map(|x| fnargv.push(abstrast::arg(x.slice_from(0), "f32"))).last();},
+		Some(ref aargs) => {aargs.iter().map(|x| fnargv.push(abstrast::arg(x.as_slice(), "f32"))).last();},
 		None => ()
 	};
-	fn_item(g.name, fnargv, ty_nil(), block(channelStmts, None))
+	fn_item(g.name.as_slice(), fnargv, ty_nil(), block(channelStmts, None))
 }
 
 fn main () {
 	let forest: Vec<(Graph, Vec<json::Json>)> = getGraph();
 	println!("{}", File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap());
-	let o: Vec<~str> = forest.move_iter().map(|(x,y)| genFunction(x,y)).map(|z| syntax::print::pprust::item_to_str(&z)).collect();
+	let o: Vec<StrBuf> = forest.move_iter().map(|(x,y)| genFunction(x,y)).map(|z| syntax::print::pprust::item_to_str(&z)).collect();
 	for f in o.iter() {
 		println!("{}", f);
 	}
