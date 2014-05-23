@@ -20,7 +20,7 @@ struct Node {
 // naive graph format
 #[deriving(Decodable,Encodable)]
 struct Graph {
-	edges: Vec<Vec<StrBuf>>,
+	edges: Vec<(StrBuf, StrBuf)>,
 	nodes: Vec<Node>,
 	name: StrBuf,
 	args: Option<Vec<StrBuf>>,
@@ -97,12 +97,12 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 		let mut rxers: Vec<StrBuf> = vec!();
 		let mut txers: Vec<StrBuf> = vec!();
 		let n = expandPrim(node.pname.clone());
-		for edge in g.edges.iter() {
-			if &node.uid == edge.get(0) {
-				txers.push("tx".to_strbuf().append(edge.get(0).as_slice()).append(edge.get(1).as_slice()));
+		for &(ref e0, ref e1) in g.edges.iter() {
+			if node.uid == e0 {
+				txers.push("tx".to_strbuf().append(e0.as_slice()).append(e1.as_slice()));
 			}
-			else if &node.uid == edge.get(1) {
-				rxers.push("rx".to_strbuf().append(edge.get(0).as_slice()).append(edge.get(1).as_slice()));
+			else if node.uid == e1 {
+				rxers.push("rx".to_strbuf().append(e0.as_slice()).append(e1.as_slice()));
 			}
 		}
 		match n.as_slice() {
@@ -122,13 +122,13 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 	for (node, arg) in g.nodes.clone().move_iter().zip(args.move_iter()) {
 		let mut rxers: Vec<StrBuf> = vec!();
 		let mut txers: Vec<StrBuf> = vec!();
-		for edge in g.edges.iter() {
-			if &node.uid == edge.get(0) {
-				let ename = "tx".to_strbuf().append(edge.get(0).as_slice()).append(edge.get(1).as_slice());
+		for &(ref e0, ref e1) in g.edges.iter() {
+			if node.uid == e0 {
+				let ename = "tx".to_strbuf().append(e0.as_slice()).append(e1.as_slice());
 				txers.push(ename);
 			}
-			else if &node.uid == edge.get(1) {
-				rxers.push("rx".to_strbuf().append(edge.get(0).as_slice()).append(edge.get(1).as_slice()));
+			else if node.uid == e1 {
+				rxers.push("rx".to_strbuf().append(e0.as_slice()).append(e1.as_slice()));
 			}
 		}
 		let n = expandPrim(node.pname.clone());
