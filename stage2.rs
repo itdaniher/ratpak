@@ -3,29 +3,59 @@
 extern crate serialize;
 extern crate syntax;
 extern crate abstrast;
+extern crate graphviz;
 
+use graphviz::maybe_owned_vec::IntoMaybeOwnedVector;
 use std::strbuf::StrBuf;
 use std::io::File;
 use std::path::Path;
 use abstrast::*;
 use syntax::ast;
 use serialize::{json, Encodable, Decodable};
+use std::str;
 
 #[deriving(Decodable,Encodable,Clone)]
 struct Node {
 	pname: StrBuf,
-	uid: StrBuf
+	uid: StrBuf,
+	label: StrBuf
 }
 
+type Edge = (StrBuf, StrBuf);
+
 // naive graph format
-#[deriving(Decodable,Encodable)]
+#[deriving(Decodable,Encodable,Clone)]
 struct Graph {
-	edges: Vec<(StrBuf, StrBuf)>,
+	edges: Vec<Edge>,
 	nodes: Vec<Node>,
 	name: StrBuf,
 	args: Option<Vec<StrBuf>>,
 	inrx: bool,
 	outtx: bool,
+}
+
+impl<'a> graphviz::Labeller<'a, Node, Edge> for Graph {
+    fn graph_id(&'a self) -> graphviz::Id<'a> { graphviz::Id::new(self.name.as_slice()) }
+    fn node_id(&'a self, n: &Node) -> graphviz::Id<'a> {
+        graphviz::Id::new(n.uid.clone().into_maybe_owned())
+    }
+    fn node_label<'a>(&'a self, n: &Node) -> graphviz::LabelText<'a> {
+        graphviz::LabelStr(n.pname.clone().into_maybe_owned())
+    }
+    fn edge_label<'a>(&'a self, _: &Edge) -> graphviz::LabelText<'a> {
+        graphviz::LabelStr("".into_maybe_owned())
+    }
+}
+
+impl<'a> graphviz::GraphWalk<'a, Node, Edge> for Graph {
+    fn nodes(&'a self) -> graphviz::Nodes<'a,Node> {
+        self.nodes.clone().into_maybe_owned()
+    }
+    fn edges(&'a self) -> graphviz::Edges<'a,Edge> {
+        self.edges.clone().into_maybe_owned()
+    }
+    fn source(&self, e: &Edge) -> Node { let &(ref s,_) = e; self.nodes.iter().filter_map(|n| {if &n.uid == s { Some(n.clone()) } else {None}}).next().unwrap() }
+    fn target(&self, e: &Edge) -> Node { let &(_,ref t) = e; self.nodes.iter().filter_map(|n| {if &n.uid == t { Some(n.clone()) } else {None}}).next().unwrap() }
 }
 
 fn expandPrim(nodepname: StrBuf) -> StrBuf {
@@ -193,6 +223,9 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 
 fn main () {
 	let forest: Vec<(Graph, Vec<json::Json>)> = getGraph();
+	let mut out = File::create(&Path::new("temps.dot")).unwrap();
+	let (g, _) = forest.get(0).clone();
+    graphviz::render(&g, &mut out);
 	println!("{}", File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap());
 	let o: Vec<StrBuf> = forest.move_iter().map(|(x,y)| genFunction(x,y)).map(|z| syntax::print::pprust::item_to_str(&z)).collect();
 	for f in o.iter() {
