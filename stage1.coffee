@@ -12,7 +12,7 @@ i = if process.argv.length > 2 then parseInt(process.argv[2]) else 0
 b = v[i]
 
 uidgen = (a) ->
-	("00"+a.y).slice(-3) + ("00"+a.x).slice(-3)
+	"N"+("00"+a.y).slice(-3) + ("00"+a.x).slice(-3)
 
 getEdgesTo = (n, g) ->
 	out = []
