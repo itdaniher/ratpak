@@ -223,12 +223,10 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 
 fn main () {
 	let forest: Vec<(Graph, Vec<json::Json>)> = getGraph();
-	let mut out = File::create(&Path::new("temps.dot")).unwrap();
-	let (g, _) = forest.get(0).clone();
-    graphviz::render(&g, &mut out);
-	println!("{}", File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap());
-	let o: Vec<StrBuf> = forest.move_iter().map(|(x,y)| genFunction(x,y)).map(|z| syntax::print::pprust::item_to_str(&z)).collect();
-	for f in o.iter() {
-		println!("{}", f);
+	for &(ref g, _) in forest.iter() {
+		let mut out = File::create(&Path::new(g.name.clone().append(".dot"))).unwrap(); graphviz::render(g, &mut out);
 	}
+	let boilerplate = File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap();
+	let mut stage3 = File::create(&Path::new("stage3.rs")).unwrap();
+	forest.move_iter().map(|(x,y)| genFunction(x,y)).map(|z| stage3.write(syntax::print::pprust::item_to_str(&z).as_bytes())).last();
 }
