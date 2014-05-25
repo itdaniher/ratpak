@@ -35,15 +35,19 @@ brown =>
 	(^ (Z) out)
 	@xa
 
-#main2
-	pulseSource 8000, 512
-	,$
-	biquaddf2 '0.9427615784986199', '-0.33326621039701554', '0.5690069472239089', '-1.1380138944478178', '0.5690069472239089'
-	$512
-	,&'|x|{complex::Cmplx::new(*x, 0f32)}'
+main
+	digitalWaveguide '(6.28f32 * 1e3/48e3f32).cos()'
+	vidSink 512
+
+#	pulseSource 8000, 512
+	,&'|x|{complex::Complex::new(*x, 0f32)}'
 	fft 512, 0
 	,&'|x|{x.norm()}'
 	,vidSink
+
+main2
+	biquaddf2 '0.9427615784986199', '-0.33326621039701554', '0.5690069472239089', '-1.1380138944478178', '0.5690069472239089'
+	$512
 
 => spectrogram
 	in
@@ -55,8 +59,6 @@ brown =>
 	@xb
 
 scratchpad
-	digitalWaveguide '(6.28f32 * 1e3/48e3f32).cos()'
-	vidSink 512
 
 output
 	&'|x| {"d"}' @oa
@@ -70,7 +72,7 @@ output
 	(/+ @ob @oc)
 	^ (Z) (&'|x| -> bool { return x > 500f32 }')
 	(^ (@xb) (* -5e-4)) differentiator
-	(@0) (@xc) (@xa)#
+	(@0) (@xc) (@xa)
 
 main
 	rtlSourceCmplx (4339e5, 402, 256e3)
@@ -89,5 +91,5 @@ main
 	%
 	differentiator
 	&'|x| {(time::get_time().sec, x)}'
-	printSink
+	printSink#
 

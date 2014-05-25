@@ -150,8 +150,10 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 		}
 	}
 	for (node, arg) in g.nodes.clone().move_iter().zip(args.move_iter()) {
+		let n = expandPrim(node.pname.clone());
 		let mut rxers: Vec<StrBuf> = vec!();
 		let mut txers: Vec<StrBuf> = vec!();
+		let mut argv = vec!();
 		for &(ref e0, ref e1) in g.edges.iter() {
 			if &node.uid == e0 {
 				let ename = "tx".to_strbuf().append(e0.as_slice()).append(e1.as_slice());
@@ -161,8 +163,6 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 				rxers.push("rx".to_strbuf().append(e0.as_slice()).append(e1.as_slice()));
 			}
 		}
-		let n = expandPrim(node.pname.clone());
-		let mut argv = vec!();
 		match rxers.len() {
 			0 => (),
 			1 => argv.push(expr_path(rxers.get(0).as_slice())),
@@ -224,9 +224,13 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 fn main () {
 	let forest: Vec<(Graph, Vec<json::Json>)> = getGraph();
 	for &(ref g, _) in forest.iter() {
-		let mut out = File::create(&Path::new(g.name.clone().append(".dot"))).unwrap(); graphviz::render(g, &mut out);
+		let mut out = File::create(&Path::new(g.name.clone().append(".dot"))).unwrap();
+		graphviz::render(g, &mut out);
 	}
-	let boilerplate = File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap();
 	let mut stage3 = File::create(&Path::new("stage3.rs")).unwrap();
-	forest.move_iter().map(|(x,y)| genFunction(x,y)).map(|z| stage3.write(syntax::print::pprust::item_to_str(&z).as_bytes())).last();
+	let boilerplate = File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap();
+	stage3.write(boilerplate.as_bytes());
+	for z in forest.move_iter().map(|(x,y)| genFunction(x,y)) {
+		 stage3.write(syntax::print::pprust::item_to_str(&z).as_bytes());
+	}
 }
