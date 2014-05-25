@@ -40,7 +40,7 @@ impl<'a> graphviz::Labeller<'a, Node, Edge> for Graph {
         graphviz::Id::new(n.uid.clone().into_maybe_owned())
     }
     fn node_label<'a>(&'a self, n: &Node) -> graphviz::LabelText<'a> {
-        graphviz::LabelStr(n.pname.clone().into_maybe_owned())
+        graphviz::LabelStr(n.label.clone().into_maybe_owned())
     }
     fn edge_label<'a>(&'a self, _: &Edge) -> graphviz::LabelText<'a> {
         graphviz::LabelStr("".into_maybe_owned())
