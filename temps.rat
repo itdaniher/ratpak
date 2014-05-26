@@ -77,9 +77,9 @@ output
 	(/+ @ob @oc)
 	^ (Z) (&'|x| -> bool { return x > 500f32 }')
 	(^ (@xb) (* -5e-4)) differentiator
-	(@0) (@xc) (@xa)
+	(@0) (@xc) (@xa)#
 
-main
+sproutwave
 	rtlSourceCmplx (4339e5, 402, 256e3)
 	^ (,&'|x|{x.norm()}')
 	trigger
@@ -96,5 +96,5 @@ main
 	%
 	differentiator
 	&'|x| {(time::get_time().sec, x)}'
-	printSink#
+	printSink
 
