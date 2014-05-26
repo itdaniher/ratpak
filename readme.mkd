@@ -1,7 +1,6 @@
-# Rust Version
+## Rust Version
 
-> rustc 0.11-pre (ade02bb 2014-04-26 06:46:24 -0700)
-
+> rustc 0.11.0-pre (96670e9 2014-05-21 09:46:27 -0700)
 
 ## Introduction
 
