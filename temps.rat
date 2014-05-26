@@ -1,9 +1,9 @@
-=> biquaddf2 (a1, a2, b0, b1, b2) =>
+=> biquaddf2 (a0, a1, a2, b1, b2) =>
 	in
 	/+ @oc @od
-	^ Z *b0
-	(^ Z *a1 *b1) (/+ @oa @ob)
-	(^ *a2 *b2) @xc @xa out
+	^ Z *a0
+	(^ Z *b1 *a1) (/+ @oa @ob)
+	(^ *b2 *a2) @xc @xa out
 	@xd @xb
 
 biquadOsc (k) =>
@@ -26,17 +26,22 @@ digitalWaveguide (c) =>
 
 agwn =>
 	~'|v: Sender<f32>|{loop{let Closed01(val) = random::<Closed01<f32>>();v.send(val)}}'
+	* '2f32'
+	!'|x|{x-1f32}'
 	out
 
 brown =>
 	agwn
-	* '2f32'
 	/+ '-1f32' @0 @oa
 	(^ (Z) out)
 	@xa
 
 main
-	digitalWaveguide '(6.28f32 * 1e3/48e3f32).cos()'
+	(~'|v|{v.send(range(0,100).map(|x| match x.rem(&2) == 1 { false => (1f32, 0.01f32), true => (-1f32, 0.01f32)}).collect())}') digitalWaveguide '(6.28f32 * 1e3/10e3f32).cos()'
+	(,$) @xa
+	dld '10e3f32'
+	biquaddf2 '0.0009446914586925254', '0.0018893829173850507', '0.0009446914586925254', '1.911196288237583', '-0.914975054072353'
+	/* @0 @oa
 	vidSink 512
 
 #	pulseSource 8000, 512
@@ -46,7 +51,7 @@ main
 	,vidSink
 
 main2
-	biquaddf2 '0.9427615784986199', '-0.33326621039701554', '0.5690069472239089', '-1.1380138944478178', '0.5690069472239089'
+	biquaddf2 
 	$512
 
 => spectrogram
