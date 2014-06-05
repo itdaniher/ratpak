@@ -1,5 +1,3 @@
-#![feaure(managed_boxes, quote)]
-
 extern crate syntax;
 extern crate serialize;
 use std::default::Default;
@@ -12,7 +10,7 @@ use syntax::codemap;
 use syntax::parse::token;
 use syntax::abi;
 use syntax::parse::token::intern_and_get_ident;
-use std::strbuf::StrBuf;
+use std::string::String;
 
 pub fn path(name: &str, ty: Option<ast::Ty_>) -> ast::Path {
 	ast::Path {
@@ -63,7 +61,7 @@ pub fn spawn(fname: &str, args: Vec<P<ast::Expr>>) -> P<ast::Expr> {
 		cf: ast::Return,
 		variadic: false
 	};
-	expr_call(expr_path("native::task::spawn_opts"), vec!(parse_expr(format!("std::task::TaskOpts \\{notify_chan: None, name: Some(\"{}\".into_maybe_owned()), stack_size: None, stdout: None, stderr:None\\}", fname).to_strbuf()), expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
+	expr_call(expr_path("native::task::spawn_opts"), vec!(parse_expr(format!("std::task::TaskOpts \\{notify_chan: None, name: Some(\"{}\".into_maybe_owned()), stack_size: None, stdout: None, stderr:None\\}", fname).to_string()), expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
 }
 
 pub fn block(stmts: Vec<P<ast::Stmt>>, expr: Option<P<ast::Expr>>) -> P<ast::Block> {
@@ -174,6 +172,7 @@ pub fn stmt_let(pat: P<ast::Pat>, expr: P<ast::Expr>) -> P<ast::Stmt> {
 				init: Some(expr),
 				id: 0,
 				span: codemap::DUMMY_SP,
+				source: ast::LocalLet
 			}))
 		)),
 		0
@@ -184,17 +183,17 @@ pub fn stmt_semi(expr: P<ast::Expr>) -> P<ast::Stmt> {
 }
 
 
-pub fn parse_expr(e: StrBuf) -> P<ast::Expr> {
+pub fn parse_expr(e: String) -> P<ast::Expr> {
 	let ps = syntax::parse::new_parse_sess();
-	let mut p = syntax::parse::new_parser_from_source_str(&ps, vec!(), StrBuf::from_str("file"), e);
+	let mut p = syntax::parse::new_parser_from_source_str(&ps, vec!(), String::from_str("file"), e);
 	let r = p.parse_expr();
 	p.abort_if_errors();
 	r
 }
 
-pub fn parse_stmt(e: StrBuf) -> P<ast::Stmt> {
+pub fn parse_stmt(e: String) -> P<ast::Stmt> {
 	let ps = syntax::parse::new_parse_sess();
-	let mut p = syntax::parse::new_parser_from_source_str(&ps, vec!(), StrBuf::from_str("file"), e);
+	let mut p = syntax::parse::new_parser_from_source_str(&ps, vec!(), String::from_str("file"), e);
 	let r = p.parse_stmt(vec!());
 	p.abort_if_errors();
 	r
@@ -203,9 +202,9 @@ pub fn parse_stmt(e: StrBuf) -> P<ast::Stmt> {
 pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
 	match jsonobj {
 		json::Number(v) if (v - (v as int) as f64).abs() < 10.0*Float::epsilon() => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitIntUnsuffixed(v as i64))))),
-		json::Number(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v))))))),
+		json::Number(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v).as_slice())))))),
 		json::String(v) => Some(ast::ExprPath(path(v.as_slice(), None))),
-		json::List(l) => if (l.len() == 1 && l.get(0).is_list() == true) {
+		json::List(l) => if l.len() == 1 && l.get(0).is_list() == true {
 			Some(ast::ExprVstore(expr_vec((l.get(0).as_list().unwrap()).iter().filter_map(|a| {JSONtoAST(a.clone())}).map(|a| expr(a)).collect()), ast::ExprVstoreUniq))}
 		else {
 			Some(ast::ExprVec(l.move_iter().filter_map(|a| {JSONtoAST(a)}).map(|a| expr(a)).collect()))},
@@ -213,8 +212,4 @@ pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
 		json::Null => None,
 		_ => None
 	}
-}
-
-pub fn main() {
-	println!("{:?}", parse_stmt("let x = vec!(0f32)".to_strbuf()))
 }
