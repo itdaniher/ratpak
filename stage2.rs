@@ -205,7 +205,7 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 					spawnExprs.push(spawn(n.as_slice(), argv));
 					txers.iter().map(|txer| {
 						let dstrm = ("r").to_string().append(txer.as_slice().slice_from(1));
-						if io.clone().iter().filter(|x| x.as_slice() == txer.as_slice()).len() < 1 {
+						if io.clone().iter().filter(|x| x.as_slice() == txer.as_slice()).count() < 1 {
 							channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(txer.as_slice()),
 								pat_name(dstrm.as_slice()))), expr_call(expr_path("channel"), vec!())));
 							}

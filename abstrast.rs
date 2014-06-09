@@ -61,7 +61,7 @@ pub fn spawn(fname: &str, args: Vec<P<ast::Expr>>) -> P<ast::Expr> {
 		cf: ast::Return,
 		variadic: false
 	};
-	expr_call(expr_path("native::task::spawn_opts"), vec!(parse_expr(format!("std::task::TaskOpts \\{notify_chan: None, name: Some(\"{}\".into_maybe_owned()), stack_size: None, stdout: None, stderr:None\\}", fname).to_string()), expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
+	expr_call(expr_path("native::task::spawn_opts"), vec!(parse_expr(format!("rustrt::task::TaskOpts \\{on_exit: None, name: Some(\"{}\".into_maybe_owned()), stack_size: None\\}", fname).to_string()), expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
 }
 
 pub fn block(stmts: Vec<P<ast::Stmt>>, expr: Option<P<ast::Expr>>) -> P<ast::Block> {
