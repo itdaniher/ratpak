@@ -10,6 +10,7 @@ use syntax::codemap;
 use syntax::parse::token;
 use syntax::abi;
 use syntax::parse::token::intern_and_get_ident;
+use syntax::owned_slice::OwnedSlice;
 use std::string::String;
 
 pub fn path(name: &str, ty: Option<ast::Ty_>) -> ast::Path {
@@ -21,7 +22,7 @@ pub fn path(name: &str, ty: Option<ast::Ty_>) -> ast::Path {
 				identifier: token::str_to_ident(name),
 				lifetimes: Default::default(),
 				// TODO: some way to change the type allowing this constructor to be used for fndef
-				types: match ty { Some(n) => syntax::owned_slice::OwnedSlice::from_vec(vec!(P(ast::Ty { id: 0, node: n, span: codemap::DUMMY_SP }))), None => Default::default()}
+				types: match ty { Some(n) => OwnedSlice::from_vec(vec!(P(ast::Ty { id: 0, node: n, span: codemap::DUMMY_SP }))), None => Default::default()}
 			}
 		),
 	}
@@ -42,7 +43,26 @@ pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: ast::P<ast::Ty>, block
 		variadic: false
 	};
 
-	let generics = ast_util::empty_generics();
+	let generics = ast::Generics {
+		lifetimes: Vec::new(),
+		ty_params: OwnedSlice::from_vec(vec!(
+			ast::TyParam {
+				ident: token::str_to_ident("T"),
+				id: 0,
+				sized: ast::StaticSize,
+				bounds: OwnedSlice::from_vec(vec!(
+					ast::TraitTyParamBound( ast::TraitRef {
+						path: path("core::num::Float", None),
+						ref_id: 0
+					}),
+					ast::TraitTyParamBound( ast::TraitRef {
+						path: path("core::kinds::Send", None),
+						ref_id: 0
+					}),
+					)),
+				default: None,
+				span: codemap::DUMMY_SP
+			}))};
 	ast::Item {
 		ident: token::str_to_ident(name),
 		attrs: vec!(),
