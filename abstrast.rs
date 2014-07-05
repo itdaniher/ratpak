@@ -83,7 +83,7 @@ pub fn spawn(fname: &str, args: Vec<P<ast::Expr>>) -> P<ast::Expr> {
 		cf: ast::Return,
 		variadic: false
 	};
-	expr_call(parse_expr(format!("task::TaskBuilder::named(\"{name}\").spawn", name=fname)), vec!(expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
+	expr_call(parse_expr(format!("task::TaskBuilder::new().named(\"{name}\").spawn", name=fname)), vec!(expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
 }
 
 pub fn block(stmts: Vec<P<ast::Stmt>>, expr: Option<P<ast::Expr>>) -> P<ast::Block> {
@@ -113,7 +113,7 @@ pub fn expr_str(s: &str) -> P<ast::Expr> {
 	expr_lit(ast::LitStr(intern_and_get_ident(s), ast::CookedStr))
 }
 
-pub fn expr_owned_vec(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
+pub fn expr_vec(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
 	expr(ast::ExprVec(l))
 }
 
@@ -127,10 +127,6 @@ pub fn expr_path(p: &str) -> P<ast::Expr> {
 
 pub fn expr_tuple(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
 	expr(ast::ExprTup(l))
-}
-
-pub fn expr_vec(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
-	expr(ast::ExprVec(l))
 }
 
 pub fn expr_call(f: P<ast::Expr>, args: Vec<P<ast::Expr>>) -> P<ast::Expr> {
@@ -227,7 +223,7 @@ pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
 		json::Number(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v).as_slice())))))),
 		json::String(v) => Some(ast::ExprPath(path(v.as_slice(), None))),
 		json::List(l) => if l.len() == 1 && l.get(0).is_list() == true {
-			Some(ast::ExprVstore(expr_vec((l.get(0).as_list().unwrap()).iter().filter_map(|a| {JSONtoAST(a.clone())}).map(|a| expr(a)).collect()), ast::ExprVstoreUniq))}
+			Some(ast::ExprVec(vec!(expr_vec((l.get(0).as_list().unwrap()).iter().filter_map(|a| {JSONtoAST(a.clone())}).map(|a| expr(a)).collect()))))}
 		else {
 			Some(ast::ExprVec(l.move_iter().filter_map(|a| {JSONtoAST(a)}).map(|a| expr(a)).collect()))},
 		json::Boolean(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitBool(v))))),
