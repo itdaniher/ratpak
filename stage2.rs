@@ -87,8 +87,8 @@ fn getDefaultArgs(nodepname: String) -> String{
 	let mut out: String= "".to_string();
 	match nodepname.len() {
 		1..3 => match c0 {
-			'*' => "1.0",
-			'+' | 'Z' => "0.0",
+			'*' => "num::one()",
+			'+' | 'Z' => "num::zero()",
 			'/' => { out = getDefaultArgs(snp); out.as_slice()}
 			',' => { match getDefaultArgs(snp).as_slice() {
 					"" => "",

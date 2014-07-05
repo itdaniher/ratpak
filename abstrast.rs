@@ -36,33 +36,35 @@ pub fn arg(e: &str, n: &str) -> ast::Arg {
 }
 
 pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: ast::P<ast::Ty>, block: ast::P<ast::Block>) -> ast::Item{
+	let generics = match inputs.len() {
+		0 => ast_util::empty_generics(),
+		_ => ast::Generics {
+			lifetimes: Vec::new(),
+			ty_params: OwnedSlice::from_vec(vec!(
+				ast::TyParam {
+					ident: token::str_to_ident("T"),
+					id: 0,
+					sized: ast::StaticSize,
+					bounds: OwnedSlice::from_vec(vec!(
+						ast::TraitTyParamBound( ast::TraitRef {
+							path: path("core::num::Float", None),
+							ref_id: 0
+						}),
+						ast::TraitTyParamBound( ast::TraitRef {
+							path: path("core::kinds::Send", None),
+							ref_id: 0
+						}),
+						)),
+					default: None,
+					span: codemap::DUMMY_SP
+				}))}
+	};
 	let decl = ast::FnDecl {
 		inputs: inputs,
 		output: output,
 		cf: ast::Return,
 		variadic: false
 	};
-
-	let generics = ast::Generics {
-		lifetimes: Vec::new(),
-		ty_params: OwnedSlice::from_vec(vec!(
-			ast::TyParam {
-				ident: token::str_to_ident("T"),
-				id: 0,
-				sized: ast::StaticSize,
-				bounds: OwnedSlice::from_vec(vec!(
-					ast::TraitTyParamBound( ast::TraitRef {
-						path: path("core::num::Float", None),
-						ref_id: 0
-					}),
-					ast::TraitTyParamBound( ast::TraitRef {
-						path: path("core::kinds::Send", None),
-						ref_id: 0
-					}),
-					)),
-				default: None,
-				span: codemap::DUMMY_SP
-			}))};
 	ast::Item {
 		ident: token::str_to_ident(name),
 		attrs: vec!(),
@@ -81,7 +83,7 @@ pub fn spawn(fname: &str, args: Vec<P<ast::Expr>>) -> P<ast::Expr> {
 		cf: ast::Return,
 		variadic: false
 	};
-	expr_call(expr_path("native::task::spawn_opts"), vec!(parse_expr(format!("rustrt::task::TaskOpts \\{on_exit: None, name: Some(\"{}\".into_maybe_owned()), stack_size: None\\}", fname).to_string()), expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
+	expr_call(parse_expr(format!("task::TaskBuilder::named(\"{name}\").spawn", name=fname)), vec!(expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
 }
 
 pub fn block(stmts: Vec<P<ast::Stmt>>, expr: Option<P<ast::Expr>>) -> P<ast::Block> {
@@ -112,7 +114,7 @@ pub fn expr_str(s: &str) -> P<ast::Expr> {
 }
 
 pub fn expr_owned_vec(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
-	expr(ast::ExprVstore(expr_vec(l), ast::ExprVstoreUniq))
+	expr(ast::ExprVec(l))
 }
 
 pub fn expr_char(c: char) -> P<ast::Expr> {
@@ -144,7 +146,7 @@ pub fn pat(p: ast::Pat_) -> P<ast::Pat> {
 }
 
 pub fn pat_name(name: &str) -> P<ast::Pat> {
-	pat(ast::PatIdent(ast::BindByValue(ast::MutImmutable), path(name, None), None))
+	pat(ast::PatIdent(ast::BindByValue(ast::MutImmutable), codemap::dummy_spanned(syntax::ast::Ident::new(syntax::parse::token::intern(name))), None))
 }
 
 pub fn pat_tuple(items: Vec<P<ast::Pat>>) -> P<ast::Pat> {
