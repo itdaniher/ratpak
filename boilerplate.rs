@@ -21,7 +21,7 @@ use pasimple::*;
 use kpn::*;
 use bitfount::*;
 use vidsink2::*;
-use native::task;
+use std::task;
 use num::complex;
 use std::rand::{random, Closed01};
 use std::comm::{Receiver, Sender, channel, Messages};

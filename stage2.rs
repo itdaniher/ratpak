@@ -87,8 +87,8 @@ fn getDefaultArgs(nodepname: String) -> String{
 	let mut out: String= "".to_string();
 	match nodepname.len() {
 		1..3 => match c0 {
-			'*' => "1.0f32",
-			'+' | 'Z' => "0.0f32",
+			'*' => "num::one()",
+			'+' | 'Z' => "num::zero()",
 			'/' => { out = getDefaultArgs(snp); out.as_slice()}
 			',' => { match getDefaultArgs(snp).as_slice() {
 					"" => "",
@@ -139,12 +139,12 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 			"in" => {
 				let x = ("r").to_string().append(txers.get(0).as_slice().slice_from(1));
 				io.push(x.clone());
-				fnargv.push(abstrast::arg(x.as_slice(), "Receiver<f32>"))
+				fnargv.push(abstrast::arg(x.as_slice(), "Receiver<T>"))
 				}
 			"out" => {
 				let x = ("t").to_string().append(rxers.get(0).as_slice().slice_from(1));
 				io.push(x.clone());
-				fnargv.push(abstrast::arg(x.as_slice(), "Sender<f32>"))
+				fnargv.push(abstrast::arg(x.as_slice(), "Sender<T>"))
 				}
 			_ => {}
 		}
@@ -166,7 +166,7 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 		match rxers.len() {
 			0 => (),
 			1 => argv.push(expr_path(rxers.get(0).as_slice())),
-			_ => argv.push(expr_owned_vec(rxers.iter().map(|x| expr_path(x.as_slice())).collect()))
+			_ => argv.push(expr_vec(rxers.iter().map(|x| expr_path(x.as_slice())).collect()))
 		}
 		match txers.len() {
 			0 => (),
@@ -175,7 +175,7 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 					let ftx = txers.get(0).as_slice().slice_to(13).to_string().append("0");
 					let frx = ("r").to_string().append(ftx.as_slice().slice_from(1));
 					spawnExprs.push(spawn("fork",
-						vec!(expr_path(frx.as_slice()), expr_owned_vec(txers.iter().map(
+						vec!(expr_path(frx.as_slice()), expr_vec(txers.iter().map(
 							|x| expr_path(x.as_slice())).collect()))));
 						channelStmts.push(stmt_let(pat_tuple(vec!(pat_name(ftx.as_slice()),
 							pat_name(frx.as_slice()))), expr_call(expr_path("channel"), vec!())));
@@ -215,7 +215,7 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 	};
 	channelStmts.push_all_move(spawnExprs.move_iter().map(|x| stmt_semi(x)).collect());
 	match g.args {
-		Some(ref aargs) => {aargs.iter().map(|x| fnargv.push(abstrast::arg(x.as_slice(), "f32"))).last();},
+		Some(ref aargs) => {aargs.iter().map(|x| fnargv.push(abstrast::arg(x.as_slice(), "T"))).last();},
 		None => ()
 	};
 	fn_item(g.name.as_slice(), fnargv, ty_nil(), block(channelStmts, None))

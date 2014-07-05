@@ -10,6 +10,7 @@ use syntax::codemap;
 use syntax::parse::token;
 use syntax::abi;
 use syntax::parse::token::intern_and_get_ident;
+use syntax::owned_slice::OwnedSlice;
 use std::string::String;
 
 pub fn path(name: &str, ty: Option<ast::Ty_>) -> ast::Path {
@@ -21,7 +22,7 @@ pub fn path(name: &str, ty: Option<ast::Ty_>) -> ast::Path {
 				identifier: token::str_to_ident(name),
 				lifetimes: Default::default(),
 				// TODO: some way to change the type allowing this constructor to be used for fndef
-				types: match ty { Some(n) => syntax::owned_slice::OwnedSlice::from_vec(vec!(P(ast::Ty { id: 0, node: n, span: codemap::DUMMY_SP }))), None => Default::default()}
+				types: match ty { Some(n) => OwnedSlice::from_vec(vec!(P(ast::Ty { id: 0, node: n, span: codemap::DUMMY_SP }))), None => Default::default()}
 			}
 		),
 	}
@@ -35,14 +36,35 @@ pub fn arg(e: &str, n: &str) -> ast::Arg {
 }
 
 pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: ast::P<ast::Ty>, block: ast::P<ast::Block>) -> ast::Item{
+	let generics = match inputs.len() {
+		0 => ast_util::empty_generics(),
+		_ => ast::Generics {
+			lifetimes: Vec::new(),
+			ty_params: OwnedSlice::from_vec(vec!(
+				ast::TyParam {
+					ident: token::str_to_ident("T"),
+					id: 0,
+					sized: ast::StaticSize,
+					bounds: OwnedSlice::from_vec(vec!(
+						ast::TraitTyParamBound( ast::TraitRef {
+							path: path("core::num::Float", None),
+							ref_id: 0
+						}),
+						ast::TraitTyParamBound( ast::TraitRef {
+							path: path("core::kinds::Send", None),
+							ref_id: 0
+						}),
+						)),
+					default: None,
+					span: codemap::DUMMY_SP
+				}))}
+	};
 	let decl = ast::FnDecl {
 		inputs: inputs,
 		output: output,
 		cf: ast::Return,
 		variadic: false
 	};
-
-	let generics = ast_util::empty_generics();
 	ast::Item {
 		ident: token::str_to_ident(name),
 		attrs: vec!(),
@@ -61,7 +83,7 @@ pub fn spawn(fname: &str, args: Vec<P<ast::Expr>>) -> P<ast::Expr> {
 		cf: ast::Return,
 		variadic: false
 	};
-	expr_call(expr_path("native::task::spawn_opts"), vec!(parse_expr(format!("rustrt::task::TaskOpts \\{on_exit: None, name: Some(\"{}\".into_maybe_owned()), stack_size: None\\}", fname).to_string()), expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
+	expr_call(parse_expr(format!("task::TaskBuilder::new().named(\"{name}\").spawn", name=fname)), vec!(expr(ast::ExprProc(P(decl), block(vec!(), Some(expr(ast::ExprBlock(block(vec!(),Some(exp))))))))))
 }
 
 pub fn block(stmts: Vec<P<ast::Stmt>>, expr: Option<P<ast::Expr>>) -> P<ast::Block> {
@@ -91,8 +113,8 @@ pub fn expr_str(s: &str) -> P<ast::Expr> {
 	expr_lit(ast::LitStr(intern_and_get_ident(s), ast::CookedStr))
 }
 
-pub fn expr_owned_vec(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
-	expr(ast::ExprVstore(expr_vec(l), ast::ExprVstoreUniq))
+pub fn expr_vec(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
+	expr(ast::ExprVec(l))
 }
 
 pub fn expr_char(c: char) -> P<ast::Expr> {
@@ -105,10 +127,6 @@ pub fn expr_path(p: &str) -> P<ast::Expr> {
 
 pub fn expr_tuple(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
 	expr(ast::ExprTup(l))
-}
-
-pub fn expr_vec(l: Vec<P<ast::Expr>>) -> P<ast::Expr> {
-	expr(ast::ExprVec(l))
 }
 
 pub fn expr_call(f: P<ast::Expr>, args: Vec<P<ast::Expr>>) -> P<ast::Expr> {
@@ -124,7 +142,7 @@ pub fn pat(p: ast::Pat_) -> P<ast::Pat> {
 }
 
 pub fn pat_name(name: &str) -> P<ast::Pat> {
-	pat(ast::PatIdent(ast::BindByValue(ast::MutImmutable), path(name, None), None))
+	pat(ast::PatIdent(ast::BindByValue(ast::MutImmutable), codemap::dummy_spanned(syntax::ast::Ident::new(syntax::parse::token::intern(name))), None))
 }
 
 pub fn pat_tuple(items: Vec<P<ast::Pat>>) -> P<ast::Pat> {
@@ -205,7 +223,7 @@ pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
 		json::Number(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v).as_slice())))))),
 		json::String(v) => Some(ast::ExprPath(path(v.as_slice(), None))),
 		json::List(l) => if l.len() == 1 && l.get(0).is_list() == true {
-			Some(ast::ExprVstore(expr_vec((l.get(0).as_list().unwrap()).iter().filter_map(|a| {JSONtoAST(a.clone())}).map(|a| expr(a)).collect()), ast::ExprVstoreUniq))}
+			Some(ast::ExprVec(vec!(expr_vec((l.get(0).as_list().unwrap()).iter().filter_map(|a| {JSONtoAST(a.clone())}).map(|a| expr(a)).collect()))))}
 		else {
 			Some(ast::ExprVec(l.move_iter().filter_map(|a| {JSONtoAST(a)}).map(|a| expr(a)).collect()))},
 		json::Boolean(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitBool(v))))),
