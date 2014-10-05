@@ -86,7 +86,7 @@ fn getDefaultArgs(nodepname: String) -> String{
 	let c0 = snp.shift_char().unwrap();
 	let mut out: String= "".to_string();
 	match nodepname.len() {
-		1..3 => match c0 {
+		1...3 => match c0 {
 			'*' => "num::one()",
 			'+' | 'Z' => "num::zero()",
 			'/' => { out = getDefaultArgs(snp); out.as_slice()}
