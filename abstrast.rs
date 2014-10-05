@@ -4,7 +4,7 @@ use std::default::Default;
 
 use serialize::json;
 use syntax::ast;
-use syntax::ast::P;
+use syntax::ptr::P;
 use syntax::ast_util;
 use syntax::codemap;
 use syntax::parse::token;
@@ -35,7 +35,7 @@ pub fn arg(e: &str, n: &str) -> ast::Arg {
 	}
 }
 
-pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: ast::P<ast::Ty>, block: ast::P<ast::Block>) -> ast::Item{
+pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: P<ast::Ty>, block: P<ast::Block>) -> ast::Item{
 	let generics = match inputs.len() {
 		0 => ast_util::empty_generics(),
 		_ => ast::Generics {
@@ -44,17 +44,19 @@ pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: ast::P<ast::Ty>, block
 				ast::TyParam {
 					ident: token::str_to_ident("T"),
 					id: 0,
-					sized: ast::StaticSize,
 					bounds: OwnedSlice::from_vec(vec!(
 						ast::TraitTyParamBound( ast::TraitRef {
 							path: path("core::num::Float", None),
+							lifetimes: vec!(),
 							ref_id: 0
 						}),
 						ast::TraitTyParamBound( ast::TraitRef {
 							path: path("core::kinds::Send", None),
+							lifetimes: vec!(),
 							ref_id: 0
 						}),
 						)),
+					unbound: None,
 					default: None,
 					span: codemap::DUMMY_SP
 				}))}
@@ -69,7 +71,7 @@ pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: ast::P<ast::Ty>, block
 		ident: token::str_to_ident(name),
 		attrs: vec!(),
 		id: 0,
-		node: ast::ItemFn(ast::P(decl), ast::NormalFn, abi::Rust, generics, block),
+		node: ast::ItemFn(P(decl), ast::NormalFn, abi::Rust, generics, block),
 		vis: ast::Public,
 		span: codemap::DUMMY_SP,
 	}
@@ -219,8 +221,8 @@ pub fn parse_stmt(e: String) -> P<ast::Stmt> {
 
 pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
 	match jsonobj {
-		json::Number(v) if (v - (v as int) as f64).abs() < 10.0*Float::epsilon() => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitIntUnsuffixed(v as i64))))),
-		json::Number(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v).as_slice())))))),
+		json::F64(v) if (v - (v as int) as f64).abs() < 10.0*Float::epsilon() => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitInt(v as i64))))),
+		json::F64(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v).as_slice())))))),
 		json::String(v) => Some(ast::ExprPath(path(v.as_slice(), None))),
 		json::List(l) => if l.len() == 1 && l.get(0).is_list() == true {
 			Some(ast::ExprVec(vec!(expr_vec((l.get(0).as_list().unwrap()).iter().filter_map(|a| {JSONtoAST(a.clone())}).map(|a| expr(a)).collect()))))}
