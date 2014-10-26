@@ -11,6 +11,7 @@ use std::io::File;
 use std::path::Path;
 use abstrast::*;
 use syntax::ast;
+use syntax::ptr;
 use serialize::{json, Encodable, Decodable};
 use std::str;
 
@@ -103,7 +104,7 @@ fn getDefaultArgs(nodepname: String) -> String{
 
 fn getGraph() -> Vec<(Graph, Vec<json::Json>)> {
 	// get json graph and node arguments from stage2.json
-	let json_str_to_decode = File::open(&Path::new("./stage2.json")).read_to_str().unwrap();
+	let json_str_to_decode = File::open(&Path::new("./stage2.json")).read_to_string().unwrap();
 	let json_object = json::from_str(json_str_to_decode.as_slice()).unwrap();
 	let mut decoder = json::Decoder::new(json_object.clone());
 	// extract enum-guarded arguments from json, do not deguard
@@ -118,8 +119,8 @@ fn getGraph() -> Vec<(Graph, Vec<json::Json>)> {
 
 
 fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
-	let mut channelStmts: Vec<ast::P<ast::Stmt>> = vec!();
-	let mut spawnExprs: Vec<ast::P<ast::Expr>> = vec!();
+	let mut channelStmts: Vec<ptr::P<ast::Stmt>> = vec!();
+	let mut spawnExprs: Vec<ptr::P<ast::Expr>> = vec!();
 	let mut fnargv: Vec<ast::Arg> = vec!();
 	let mut io: Vec<String> = vec!();
 	// this does the work - iterate over nodes and arguments
@@ -192,7 +193,7 @@ fn genFunction(g: Graph, args: Vec<json::Json>) -> ast::Item {
 							"" => vec!(),
 							x => vec!(parse_expr(x.to_string()))
 						}},
-						ast::ExprPath(_) | ast::ExprVstore(_, _) => vec!(expr(lits)),
+						ast::ExprPath(_) /*| ast::ExprVstore(_, _)*/ => vec!(expr(lits)),
 						_ => fail!("json to ast transcoding error"),
 					}
 				}
@@ -228,9 +229,9 @@ fn main () {
 		graphviz::render(g, &mut out);
 	}
 	let mut stage3 = File::create(&Path::new("stage3.rs")).unwrap();
-	let boilerplate = File::open(&Path::new("./boilerplate.rs")).read_to_str().unwrap();
-	stage3.write(boilerplate.as_bytes());
+	let boilerplate = File::open(&Path::new("./boilerplate.rs")).read_to_end().unwrap();
+	stage3.write(boilerplate.as_slice());
 	for z in forest.move_iter().map(|(x,y)| genFunction(x,y)) {
-		 stage3.write(syntax::print::pprust::item_to_str(&z).as_bytes());
+		 stage3.write(syntax::print::pprust::item_to_string(&z).as_bytes());
 	}
 }

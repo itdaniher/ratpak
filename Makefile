@@ -2,10 +2,10 @@ all: stage3.rs
 
 CC = rustc
 
-libabstrast*.so:
-	$(CC) --crate-type=dylib abstrast.rs
+libabstrast*.rlib:
+	$(CC) --crate-type=lib abstrast.rs
 
-stage2: libabstrast*.so
+stage2: libabstrast*.rlib
 	$(CC) -L./ stage2.rs
 
 stage3.rs: stage2
@@ -20,4 +20,3 @@ stage3: stage3.rs
 
 clean:
 	rm -f stage2 stage3 stage2.json stage3.rs
-	rm -rf dots
