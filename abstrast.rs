@@ -59,7 +59,8 @@ pub fn fn_item(name: &str, inputs: Vec<ast::Arg>, output: P<ast::Ty>, block: P<a
 					unbound: None,
 					default: None,
 					span: codemap::DUMMY_SP
-				}))}
+				})),
+			where_clause: ast::WhereClause{id:0, predicates:vec!()}}
 	};
 	let decl = ast::FnDecl {
 		inputs: inputs,
@@ -152,11 +153,11 @@ pub fn pat_tuple(items: Vec<P<ast::Pat>>) -> P<ast::Pat> {
 }
 
 pub fn pat_wild() -> P<ast::Pat> {
-	pat(ast::PatWild)
+	pat(ast::PatWild(ast::PatWildSingle))
 }
 
 pub fn pat_wild_multi() -> P<ast::Pat> {
-	pat(ast::PatWildMulti)
+	pat(ast::PatWild(ast::PatWildMulti))
 }
 
 pub fn ty_infer() -> P<ast::Ty> {
@@ -221,7 +222,7 @@ pub fn parse_stmt(e: String) -> P<ast::Stmt> {
 
 pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
 	match jsonobj {
-		json::F64(v) if (v - (v as int) as f64).abs() < 10.0*Float::epsilon() => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitInt(v as i64))))),
+		json::F64(v) if (v - (v as int) as f64).abs() < 10.0*Float::epsilon() => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitInt(v as u64, ast::UnsignedIntLit(ast::TyU)))))),
 		json::F64(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v).as_slice())))))),
 		json::String(v) => Some(ast::ExprPath(path(v.as_slice(), None))),
 		json::List(l) => if l.len() == 1 && l.get(0).is_list() == true {
