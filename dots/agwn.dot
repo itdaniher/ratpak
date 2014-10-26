@@ -1,0 +1,9 @@
+digraph agwn {
+    N028001[label="~(|v: Sender<f32>|{loop{let Closed01(val) = random::<Closed01<f32>>();v.send(val)}})"];
+    N029001[label="*(2f32)"];
+    N030001[label="!(|x|{x-1f32})"];
+    N031001[label="out"];
+    N028001 -> N029001[label=""];
+    N029001 -> N030001[label=""];
+    N030001 -> N031001[label=""];
+}

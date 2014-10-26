@@ -1,0 +1,10 @@
+digraph brown {
+    N034001[label="agwn"];
+    N035001[label="/+"];
+    N036001[label="Z"];
+    N036002[label="out"];
+    N034001 -> N035001[label=""];
+    N035001 -> N036001[label=""];
+    N035001 -> N036002[label=""];
+    N036001 -> N035001[label=""];
+}

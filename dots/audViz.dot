@@ -1,0 +1,11 @@
+digraph audViz {
+    N048001[label="pulseSource([8000,512])"];
+    N049001[label=",&(|x|{complex::Complex::new(*x, 0f32)})"];
+    N050001[label="fft([512,0])"];
+    N051001[label=",&(|x|{x.norm()})"];
+    N052001[label=",vidSink"];
+    N048001 -> N049001[label=""];
+    N049001 -> N050001[label=""];
+    N050001 -> N051001[label=""];
+    N051001 -> N052001[label=""];
+}
