@@ -1,0 +1,34 @@
+linear
+	source
+	procA
+	procB
+	procY
+	procZ
+	sink
+
+fork
+	source
+	^ (procA) printSink
+	printSink
+
+forkjoin
+	source
+	^ (procA) procB
+	%
+	printSink
+
+onepolelpf
+	source
+	/+ @oa @ob
+	Z
+	^ (*-1e-3) (@xa) (@xc)
+	@xb
+	printSink @oc
+
+mulacross
+	source
+	^ (procA) procB
+	@xa @xb
+	/* @oa @ob
+	printSink
+
