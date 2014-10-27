@@ -198,7 +198,7 @@ fn gen_function(g: Graph, args: Vec<json::Json>) -> ast::Item {
 			};
 
 		argv.extend(
-			match JSONtoAST(arg.clone()) {
+			match json_to_ast (arg.clone()) {
 				Some(lits) => {
 					match lits {
 						ast::ExprVec(v) => if v.len() > 0 {v} else {

@@ -220,15 +220,15 @@ pub fn parse_stmt(e: String) -> P<ast::Stmt> {
 	r
 }
 
-pub fn JSONtoAST(jsonobj: json::Json) -> Option<ast::Expr_> {
+pub fn json_to_ast(jsonobj: json::Json) -> Option<ast::Expr_> {
 	match jsonobj {
 		json::F64(v) if (v - (v as int) as f64).abs() < 10.0*Float::epsilon() => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitInt(v as u64, ast::UnsignedIntLit(ast::TyU)))))),
 		json::F64(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitFloatUnsuffixed(syntax::parse::token::intern_and_get_ident(format!("{}", v).as_slice())))))),
 		json::String(v) => Some(ast::ExprPath(path(v.as_slice(), None))),
-		json::List(l) => if l.len() == 1 && l.get(0).is_list() == true {
-			Some(ast::ExprVec(vec!(expr_vec((l.get(0).as_list().unwrap()).iter().filter_map(|a| {JSONtoAST(a.clone())}).map(|a| expr(a)).collect()))))}
+		json::List(l) => if l.len() == 1 && l[0].is_list() == true {
+			Some(ast::ExprVec(vec!(expr_vec((l[0].as_list().unwrap()).iter().filter_map(|a| {json_to_ast(a.clone())}).map(|a| expr(a)).collect()))))}
 		else {
-			Some(ast::ExprVec(l.move_iter().filter_map(|a| {JSONtoAST(a)}).map(|a| expr(a)).collect()))},
+			Some(ast::ExprVec(l.into_iter().filter_map(|a| {json_to_ast(a)}).map(|a| expr(a)).collect()))},
 		json::Boolean(v) => Some(ast::ExprLit(P(codemap::dummy_spanned(ast::LitBool(v))))),
 		json::Null => None,
 		_ => None
