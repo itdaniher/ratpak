@@ -1,0 +1,12 @@
+{
+	"name": "ratpak",
+	"version": "0.0.2",
+	"devDependencies": {
+		"coffee-script": "1.6.3"
+	},
+	"dependencies" : {
+		"pegjs" : "0.8.0",
+		"pegjs-coffee-plugin" : "0.2.1",
+		"underscore": "1.6.0"
+	}
+}
