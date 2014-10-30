@@ -111,7 +111,7 @@ fn get_graph() -> Vec<(Graph, Vec<json::Json>)> {
 		.map(|x| {x.find(&("args".to_string())).unwrap().clone()}).collect()).collect();
 	let y: Vec<Graph> = match Decodable::decode(&mut decoder) {
         Ok(v) => v,
-		Err(e) => fail!("json decoding error")
+		Err(e) => panic!("json decoding error")
 	};
 	y.into_iter().zip(args.into_iter()).collect()
 }
@@ -198,7 +198,7 @@ fn gen_function(g: Graph, args: Vec<json::Json>) -> ast::Item {
 			};
 
 		argv.extend(
-			match json_to_ast (arg.clone()) {
+			match json_to_ast(arg.clone()) {
 				Some(lits) => {
 					match lits {
 						ast::ExprVec(v) => if v.len() > 0 {v} else {
@@ -207,7 +207,7 @@ fn gen_function(g: Graph, args: Vec<json::Json>) -> ast::Item {
 							x => vec!(parse_expr(x.to_string()))
 						}},
 						ast::ExprPath(_) /*| ast::ExprVstore(_, _)*/ => vec!(expr(lits)),
-						_ => fail!("json to ast transcoding error"),
+						_ => panic!("json to ast transcoding error"),
 					}
 				}
 				None => vec!()
