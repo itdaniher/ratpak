@@ -25,6 +25,5 @@ use std::task;
 use num::complex;
 use std::rand::{random, Closed01};
 use std::comm::{Receiver, Sender, channel, Messages};
-use std::num;
 use std::vec;
 
