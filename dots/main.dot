@@ -1,19 +1,19 @@
 digraph main {
-    N078001[label="rtlSourceCmplx([433900000,402,256000])"];
+    N078001[label="rtl_source_cmplx(433900000, 402, 256000)"];
     N079001[label=",&(|x|{x.norm()})"];
     N080001[label="trigger"];
     N081001[label="discretize"];
     N082001[label="rle"];
     N083001[label="dle(256000)"];
-    N084001[label="{(|mut a,b| {a.map(|x| {b.send(match x { (1, 2e-4..6e-4) => match a.next().unwrap() { (0, 1.5e-3..2.5e-3) => Some(0u), (0, 3.5e-3..4.5e-3) => Some(1u), _ => None}, _     => None})}).last();()})"];
-    N084002[label="{(|mut a,b| {a.map(|x| {b.send(match x {(1, ref d@125e-6..250e-6) | (1, ref d @500e-6..650e-6) => {match a.next().unwrap() {(0, ref e @500e-6..650e-6) | (0, ref e@125e-6..250e-6) => Some(if d > e {1u} else {0u}),_ => None}}, _ => None})}).last();()})"];
+    N084001[label="{(|mut a,b| {a.map(|x| {b.send(match x { (1, 2e-4...6e-4) => match a.next().unwrap() { (0, 1.5e-3...2.5e-3) => Some(0u), (0, 3.5e-3...4.5e-3) => Some(1u), _ => None}, _     => None})}).last();()})"];
+    N084002[label="{(|mut a,b| {a.map(|x| {b.send(match x {(1, ref d@125e-6...250e-6) | (1, ref d @500e-6...650e-6) => {match a.next().unwrap() {(0, ref e @500e-6...650e-6) | (0, ref e@125e-6...250e-6) => Some(if d > e {1u} else {0u}),_ => None}}, _ => None})}).last();()})"];
     N085001[label="?$(36)"];
     N085002[label="?$(24)"];
-    N086001[label="B(4,8,4,12,8)"];
-    N086002[label="B(4,8,2,10,12)"];
+    N086001[label="B([4,8,4,12,8])"];
+    N086002[label="B([4,8,2,10,12])"];
     N086003[label="!(|mut x|{x.push(0); x})"];
-    N087001[label="&(|x| {if *x.get(0) == 5 {Some(x)} else {None}})"];
-    N087002[label="&(|x| {if *x.get(0) != 5 {Some(x)} else {None}})"];
+    N087001[label="&(|x| {if x[0] == 5 {Some(x)} else {None}})"];
+    N087002[label="&(|x| {if x[0] != 5 {Some(x)} else {None}})"];
     N088001[label="?{"];
     N088002[label="?{"];
     N089001[label=",&(|&x| {x as f32})"];
@@ -24,7 +24,7 @@ digraph main {
     N091001[label="%"];
     N092001[label="differentiator"];
     N093001[label="&(|x| {(time::get_time().sec, x)})"];
-    N094001[label="printSink"];
+    N094001[label="print_sink"];
     N078001 -> N079001[label=""];
     N079001 -> N080001[label=""];
     N080001 -> N081001[label=""];

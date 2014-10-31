@@ -1,11 +1,11 @@
 digraph foo {
     N040001[label="~(|v|{v.send(range(0,100).map(|x| match x.rem(&2) == 1 { false => (1f32, 0.01f32), true => (-1f32, 0.01f32)}).collect())})"];
-    N040002[label="digitalWaveguide((6.28f32 * 1e3/10e3f32).cos())"];
+    N040002[label="digital_waveguide((6.28f32 * 1e3/10e3f32).cos())"];
     N041001[label=",$"];
     N042001[label="dld(10e3f32)"];
     N043001[label="biquaddf2([\"0.0009446914586925254\",\"0.0018893829173850507\",\"0.0009446914586925254\",\"1.911196288237583\",\"-0.914975054072353\"])"];
     N044001[label="/*"];
-    N045001[label="vidSink(512)"];
+    N045001[label="vidsink(512)"];
     N040001 -> N041001[label=""];
     N040002 -> N044001[label=""];
     N041001 -> N042001[label=""];
