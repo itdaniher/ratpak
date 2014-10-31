@@ -70,13 +70,13 @@ fn expand_prim(nodepname: String) -> String {
 		'B' => "binconv",
 		'V' => "vec",
 		'$' => "shaper",
-		'~' => "softSource",
+		'~' => "soft_source",
 		'{' => "looper",
-		'&' => "crossApplicator",
+		'&' => "cross_applicator",
 		'!' => "applicator",
-		'?' => {out = expand_prim(snp); out.push_str("Optional"); out.as_slice()},
-		'/' => {out = expand_prim(snp); out.push_str("Across"); out.as_slice()},
-		',' => {out = expand_prim(snp); out.push_str("Vecs"); out.as_slice()},
+		'?' => {out = expand_prim(snp); out.push_str("_optional"); out.as_slice()},
+		'/' => {out = expand_prim(snp); out.push_str("_across"); out.as_slice()},
+		',' => {out = expand_prim(snp); out.push_str("_vecs"); out.as_slice()},
 		 _  => nodepname.as_slice()
 	}.to_string()
 }
@@ -87,8 +87,8 @@ fn get_default_args(nodepname: String) -> String{
 	let mut out: String= "".to_string();
 	match nodepname.len() {
 		1...3 => match c0 {
-			'*' => "num::one()",
-			'+' | 'Z' => "num::zero()",
+			'*' => "std::num::one()",
+			'+' | 'Z' => "std::num::zero()",
 			'/' => { out = get_default_args(snp); out.as_slice()}
 			',' => { match get_default_args(snp).as_slice() {
 					"" => "",
@@ -201,11 +201,15 @@ fn gen_function(g: Graph, args: Vec<json::Json>) -> ast::Item {
 			match json_to_ast(arg.clone()) {
 				Some(lits) => {
 					match lits {
-						ast::ExprVec(v) => if v.len() > 0 {v} else {
-						match get_default_args(node.pname.clone()).as_slice() {
-							"" => vec!(),
-							x => vec!(parse_expr(x.to_string()))
-						}},
+						ast::ExprVec(v) => match v.len() { //if v.len() > 0 {v} else {
+							0 => {
+								match get_default_args(node.pname.clone()).as_slice() {
+									"" => vec!(),
+									x => vec!(parse_expr(x.to_string()))
+								}
+							}
+							_ => v
+						},
 						ast::ExprPath(_) /*| ast::ExprVstore(_, _)*/ => vec!(expr(lits)),
 						_ => panic!("json to ast transcoding error"),
 					}
