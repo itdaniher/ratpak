@@ -1,4 +1,4 @@
-=> biquaddf2 (a0, a1, a2, b1, b2) =>
+#=> biquaddf2 (a0, a1, a2, b1, b2) =>
 	in
 	/+ @oc @od
 	^ Z *a0
@@ -6,14 +6,14 @@
 	(^ *b2 *a2) @xc @xa out
 	@xd @xb
 
-biquadOsc (k) =>
+biquad_osc (k) =>
 	/+ @oa @ob
 	Z '-1f32'
 	(^ Z '1f32' *k out)
 	(*'-1f32') (@xb)
 	@xa
 
-digitalWaveguide (c) =>
+digital_waveguide (c) =>
 	Z @oa
 	* '1f32'
 	^ (/+ @0 @of) (@xb)
@@ -37,34 +37,34 @@ brown =>
 	@xa
 
 foo
-	(~'|v|{v.send(range(0,100).map(|x| match x.rem(&2) == 1 { false => (1f32, 0.01f32), true => (-1f32, 0.01f32)}).collect())}') digitalWaveguide '(6.28f32 * 1e3/10e3f32).cos()'
+	(~'|v|{v.send(range(0,100).map(|x| match x.rem(&2) == 1 { false => (1f32, 0.01f32), true => (-1f32, 0.01f32)}).collect())}') digital_waveguide '(6.28f32 * 1e3/10e3f32).cos()'
 	(,$) @xa
 	dld '10e3f32'
 	biquaddf2 '0.0009446914586925254', '0.0018893829173850507', '0.0009446914586925254', '1.911196288237583', '-0.914975054072353'
 	/* @0 @oa
-	vidSink 512
+	vidsink 512
 
-audViz
-	pulseSource 8000, 512
+aud_viz
+	pulse_source '8000, 512'
 	,&'|x|{complex::Complex::new(*x, 0f32)}'
-	fft 512, 0
+	fft '512, 0'
 	,&'|x|{x.norm()}'
-	,vidSink
+	,vidsink
 
-#=> spectrogram
+=> spectrogram
 	in
 	fft 512, 0
 	,& '|x|{x.norm().abs()}'
 	,/+ @oa @ob
-	^ (,Z) (,vidSink)
-	(^ (,*'vec([-5e-4f32,..512])') (@xa))
+	^ (,Z) (,vidsink)
+	(^ (,*'vec([-5e-4f32,...512])') (@xa))
 	@xb
 
 output
 	&'|x| {"d"}' @oa
-	&getCode
-	bitsToPackets
-	spawnBytestream 'false'
+	&get_code
+	bits_to_packets
+	spawn_bytestream 'false'
 	differentiator
 	&'|x|{bitv::from_bytes(x.as_slice())}'
 	{'|x,y|{x.map(|a| a.iter().map(|b| y.send(b as uint)).last()).last();()}'
@@ -75,21 +75,21 @@ output
 	(@0) (@xc) (@xa)#
 
 main
-	rtlSourceCmplx (4339e5, 402, 256e3)
-	^ (,&'|x|{x.norm()}')
+	rtl_source_cmplx '433900000, 402, 256000'
+	,&'|x|{x.norm()}'
 	trigger
 	discretize
 	rle
-	dle 256e3
-	^ ({'|mut a,b| {a.map(|x| {b.send(match x { (1, 2e-4..6e-4) => match a.next().unwrap() { (0, 1.5e-3..2.5e-3) => Some(0u), (0, 3.5e-3..4.5e-3) => Some(1u), _ => None}, _     => None})}).last();()}') ({'|mut a,b| {a.map(|x| {b.send(match x {(1, ref d@125e-6..250e-6) | (1, ref d @500e-6..650e-6) => {match a.next().unwrap() {(0, ref e @500e-6..650e-6) | (0, ref e@125e-6..250e-6) => Some(if d > e {1u} else {0u}),_ => None}}, _ => None})}).last();()}')
-	?$36 ?$24
-	(^ B[4,8,4,12,8] B[4,8,2,10,12]) !'|mut x|{x.push(0); x}'
-	(&'|x| {if *x.get(0) == 5 {Some(x)} else {None}}') (&'|x| {if *x.get(0) != 5 {Some(x)} else {None}}') (@xc)
+	dle '256000'
+	^ ({'|mut a,b| {a.map(|x| {b.send(match x { (1, 2e-4...6e-4) => match a.next().unwrap() { (0, 1.5e-3...2.5e-3) => Some(0u), (0, 3.5e-3...4.5e-3) => Some(1u), _ => None}, _     => None})}).last();()}') ({'|mut a,b| {a.map(|x| {b.send(match x {(1, ref d@125e-6...250e-6) | (1, ref d @500e-6...650e-6) => {match a.next().unwrap() {(0, ref e @500e-6...650e-6) | (0, ref e@125e-6...250e-6) => Some(if d > e {1u} else {0u}),_ => None}}, _ => None})}).last();()}')
+	?$'36' ?$'24'
+	(^ B'[4,8,4,12,8]' B'[4,8,2,10,12]') !'|mut x|{x.push(0); x}'
+	(&'|x| {if x[0] == 5 {Some(x)} else {None}}') (&'|x| {if x[0] != 5 {Some(x)} else {None}}') (@xc)
 	?{ ?{
 	,&'|&x| {x as f32}' (,&'|&x| {x as f32}')
 	,* 'vec!(1., 1., 1., 1e-1, 1.)' ,* 'vec!(1., 1., 1., 1e-1, 1e-1)' ,&'|&x| {x as f32}' @oc
 	%
 	differentiator
 	&'|x| {(time::get_time().sec, x)}'
-	printSink
+	print_sink
 
