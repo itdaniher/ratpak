@@ -1,6 +1,6 @@
 ## Rust Version
 
-> rustc 0.11.0-pre (b981add 2014-06-01 22:01:36 -0700)
+> rustc 0.13.0-dev (52c3fe953 2014-10-30 17:57:09 +0000)
 
 ## Introduction
 
